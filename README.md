@@ -38,7 +38,7 @@
 1. Press **Windows key**, type `cmd`, and press **Enter**.  
 2. In the terminal, type:
    ```
-   cd Downloads\MealCraft
+   cd Downloads/MealCraft
    ```
    and press **Enter**.  
 3. Install all dependencies:
@@ -80,7 +80,7 @@
 
 1. In your Command Prompt (still in `Downloads\MealCraft`), run:
    ```
-   node server\index.js
+   node server/index.js
    ```
 2. You should see:
    ```
@@ -96,7 +96,7 @@
    - Press **Windows key**, type `cmd`, Enter.  
 2. Navigate back:
    ```
-   cd Downloads\MealCraft
+   cd Downloads/MealCraft
    ```
 3. Start Expo:
    ```
