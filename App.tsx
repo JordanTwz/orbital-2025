@@ -1,59 +1,88 @@
-/* App.tsx */
-import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+// App.tsx
+import React, { useState, useEffect } from 'react'
+import { SafeAreaView, ActivityIndicator, View, Text, TouchableOpacity } from 'react-native'
+import { NavigationContainer } from '@react-navigation/native'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
+import { subscribeToAuthChanges, logout } from './firebase'
+import SignInScreen from './screens/SignInScreen'
+import SignUpScreen from './screens/SignUpScreen'
+import HomeScreen from './screens/HomeScreen'
+import MealLogScreen from './screens/MealLogScreen'
+import { AppTheme } from './theme'
 
-// 1. Define and export your navigation param list
 export type RootStackParamList = {
-  Home: undefined;
-  MealLog: undefined;
-};
-
-// 2. Create the stack navigator with your param list
-const Stack = createNativeStackNavigator<RootStackParamList>();
-
-// 3. Define and export a simple app theme
-export const AppTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: '#4CAF50',
-    background: '#FFFFFF',
-    card: '#F5F5F5',
-    text: '#212121',
-    border: '#E0E0E0',
-  },
-};
-
-export default function App() {
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <NavigationContainer theme={AppTheme}>
-        <Stack.Navigator
-          initialRouteName="Home"
-          screenOptions={{
-            headerStyle: { backgroundColor: AppTheme.colors.primary },
-            headerTintColor: '#ffffff',
-            headerTitleStyle: { fontWeight: 'bold', fontSize: 20 },
-          }}
-        >
-          <Stack.Screen
-            name="Home"
-            component={require('./screens/HomeScreen').default}
-            options={{ title: 'MealCraft' }}
-          />
-          <Stack.Screen
-            name="MealLog"
-            component={require('./screens/MealLogScreen').default}
-            options={{ title: 'Log a Meal' }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SafeAreaView>
-  );
+  SignIn: undefined
+  SignUp: undefined
+  Home: undefined
+  MealLog: undefined
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: AppTheme.colors.background },
-});
+const Stack = createNativeStackNavigator<RootStackParamList>()
+
+export default function App() {
+  const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList | null>(null)
+
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges(user => {
+      setInitialRoute(user ? 'Home' : 'SignIn')
+    })
+    return unsubscribe
+  }, [])
+
+  if (!initialRoute) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </SafeAreaView>
+    )
+  }
+
+  return (
+    <NavigationContainer theme={AppTheme}>
+      <Stack.Navigator
+        initialRouteName={initialRoute}
+        screenOptions={{
+          headerStyle: { backgroundColor: AppTheme.colors.primary },
+          headerTintColor: '#ffffff',
+          headerTitleStyle: { fontWeight: 'bold', fontSize: 20 },
+        }}
+      >
+        <Stack.Screen
+          name="SignIn"
+          component={SignInScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SignUp"
+          component={SignUpScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={({ navigation }) => ({
+            title: 'MealCraft',
+            headerRight: () => (
+              <TouchableOpacity
+                onPress={async () => {
+                  await logout()
+                  navigation.replace('SignIn')
+                }}
+                style={{ marginRight: 16 }}
+              >
+                <Text style={{ color: '#ffffff', fontSize: 16 }}>
+                  Logout
+                </Text>
+              </TouchableOpacity>
+            ),
+          })}
+        />
+        <Stack.Screen
+          name="MealLog"
+          component={MealLogScreen}
+          options={{ title: 'Log a Meal' }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  )
+}

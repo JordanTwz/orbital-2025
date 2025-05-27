@@ -1,10 +1,11 @@
 // screens/HomeScreen.tsx
-import React from 'react';
-import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList, AppTheme } from '../App';
+import React from 'react'
+import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { NativeStackScreenProps } from '@react-navigation/native-stack'
+import type { RootStackParamList } from '../App'
+import { AppTheme } from '../theme'
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'>
 
 export default function HomeScreen({ navigation }: Props) {
   return (
@@ -20,32 +21,19 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: AppTheme.colors.background },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 24,
-    color: AppTheme.colors.text,
-  },
-  button: {
+  safeArea:  { flex: 1, backgroundColor: AppTheme.colors.background },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  title:     { fontSize: 24, marginBottom: 24, color: AppTheme.colors.text },
+  button:    {
     backgroundColor: AppTheme.colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
     elevation: 4,
   },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});
+  buttonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
+})
