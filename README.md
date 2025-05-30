@@ -23,7 +23,7 @@
 
 ## 4. Set Your OpenAI Key
 
-1. In **Downloads\MealCraft**, find `.env.example`.  
+1. In **Downloads/orbital-2025-main/server**, find `.env.example`.  
 2. Rename it to `.env`.  
 3. Right-click `.env`, choose **Open with → Notepad**.  
 4. Replace the placeholder line with your actual key:
@@ -38,13 +38,26 @@
 1. Press **Windows key**, type `cmd`, and press **Enter**.  
 2. In the terminal, type:
    ```
-   cd Downloads/MealCraft
+   cd Downloads/orbital-2025-main
    ```
    and press **Enter**.  
 3. Install all dependencies:
    ```
    npm install
    ```
+   If you get errors like express not found or multer not found, install them individually:
+   ```
+   npm install express
+   npm install multer
+   npm install cors
+   npm install dotenv
+   ```
+   
+   Confirm everything is installed by running:
+   ```
+   npm list
+   ```
+You should see ```express, multer, cors, dotenv``` in the list.
 
 
 ## 6. Find Your IPv4 Address
@@ -61,9 +74,9 @@
 
 ## 7. Update the App with Your IP
 
-1. Still in **Downloads\MealCraft**, open `screens\MealLogScreen.tsx` in Notepad:  
+1. Still in **Downloads/orbital-2025-main**, open `screens/MealLogScreen.tsx` in Notepad:  
    ```
-   notepad screens\MealLogScreen.tsx
+   notepad screens/MealLogScreen.tsx
    ```
 2. Locate this line near the top:
    ```ts
@@ -78,7 +91,7 @@
 
 ## 8. Start the Server
 
-1. In your Command Prompt (still in `Downloads\MealCraft`), run:
+1. In your Command Prompt (still in `Downloads/orbital-2025-main`), run:
    ```
    node server/index.js
    ```
@@ -96,7 +109,7 @@
    - Press **Windows key**, type `cmd`, Enter.  
 2. Navigate back:
    ```
-   cd Downloads/MealCraft
+   cd Downloads/orbital-2025-main
    ```
 3. Start Expo:
    ```
@@ -118,6 +131,6 @@
 
 ### Troubleshooting
 
-- **Server errors** → check your IP in `MealLogScreen.tsx`, then restart (`Ctrl+C` → `node server\index.js`).  
+- **Server errors** → check your IP in `MealLogScreen.tsx`, then restart (`Ctrl+C` → `node server/index.js`).  
 - **Expo won’t connect** → ensure phone & PC share the same Wi-Fi.  
-- **API key not loaded** → confirm `.env` lives directly in `Downloads\MealCraft` and is correctly formatted.  
+- **API key not loaded** → confirm `.env` lives directly in `Downloads/orbital-2025-main/server` and is correctly formatted.  
