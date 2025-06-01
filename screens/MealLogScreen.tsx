@@ -5,26 +5,25 @@ import {
   ScrollView,
   View,
   Text,
-  Button,
+  TouchableOpacity,
   Image,
   ActivityIndicator,
   Alert,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '../App'
 import { AppTheme } from '../theme'
 
-// IMPORTANT: replace with your server’s IP
-// Can we explore using ngrok or a similar service for easier testing?
-const SERVER = 'http://192.168.XX.XX:3000'
-
 type Dish = {
   name: string
   calories: number
-  macros: { carbs: number; fats: number; proteins: number }
+  macros: {
+    carbs: number
+    fats: number
+    proteins: number
+  }
 }
 
 type Analysis = {
@@ -33,15 +32,19 @@ type Analysis = {
   dishes: Dish[]
 }
 
+// IMPORTANT: replace with your IPv4 address
+// Can we explore using ngrok or a similar service for easier testing?
+const SERVER = 'http://192.168.0.59:3000'
+
 type Props = NativeStackScreenProps<RootStackParamList, 'MealLog'>
 
-export default function MealLogScreen({ navigation }: Props) {
+export default function MealLogScreen({}: Props) {
   const [imageUri, setImageUri] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
 
-  async function pickImage() {
+  const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
       Alert.alert('Permission denied', 'We need access to your photos.')
@@ -58,7 +61,7 @@ export default function MealLogScreen({ navigation }: Props) {
     }
   }
 
-  async function analyzeImage() {
+  const analyzeImage = async () => {
     if (!imageUri) return
     setLoading(true)
     try {
@@ -99,7 +102,7 @@ export default function MealLogScreen({ navigation }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Log a Meal</Text>
 
@@ -107,27 +110,28 @@ export default function MealLogScreen({ navigation }: Props) {
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.photo} />
           ) : (
-            <Text style={styles.photoPlaceholder}>
-              Tap to add a photo
-            </Text>
+            <Text style={styles.photoPlaceholder}>Tap to add a photo</Text>
           )}
         </TouchableOpacity>
 
-        {imageUri && <Button title="Analyze Meal" onPress={analyzeImage} />}
+        {imageUri && (
+          <TouchableOpacity style={styles.actionButton} onPress={analyzeImage}>
+            <Text style={styles.actionText}>Analyze Meal</Text>
+          </TouchableOpacity>
+        )}
 
         {loading && (
           <View style={styles.overlay}>
-            <ActivityIndicator size="large" />
+            <ActivityIndicator size="large" color={AppTheme.colors.primary} />
           </View>
         )}
 
         {analysis && (
-          <View style={styles.resultCard}>
-            <Text style={styles.resultTitle}>Analysis</Text>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Analysis</Text>
             <Text style={styles.summary}>
-              {analysis.description} — Total: {analysis.totalCalories} kcal
+              {analysis.description} — {analysis.totalCalories} kcal
             </Text>
-
             {analysis.dishes.map((dish, idx) => (
               <View key={idx} style={styles.dishContainer}>
                 <TouchableOpacity
@@ -140,21 +144,14 @@ export default function MealLogScreen({ navigation }: Props) {
                     {dish.name} — {dish.calories} kcal
                   </Text>
                 </TouchableOpacity>
-
                 {expandedIndex === idx && (
                   <View style={styles.macroTable}>
-                    {Object.entries(dish.macros).map(
-                      ([macro, grams]) => (
-                        <View key={macro} style={styles.macroRow}>
-                          <Text style={styles.macroName}>
-                            {macro}
-                          </Text>
-                          <Text style={styles.macroValue}>
-                            {grams} g
-                          </Text>
-                        </View>
-                      )
-                    )}
+                    {Object.entries(dish.macros).map(([m, g]) => (
+                      <View key={m} style={styles.macroRow}>
+                        <Text style={styles.macroName}>{m}</Text>
+                        <Text style={styles.macroValue}>{g} g</Text>
+                      </View>
+                    ))}
                   </View>
                 )}
               </View>
@@ -167,92 +164,106 @@ export default function MealLogScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screen: {
     flex: 1,
     backgroundColor: AppTheme.colors.background,
   },
   container: {
+    padding: AppTheme.spacing.md,
     alignItems: 'center',
-    padding: 16,
   },
   heading: {
-    fontSize: 20,
-    marginBottom: 16,
+    fontSize: AppTheme.typography.h2,
+    fontWeight: 'bold',
     color: AppTheme.colors.text,
+    marginBottom: AppTheme.spacing.lg,
   },
   photoBox: {
-    width: 250,
+    width: '100%',
     height: 250,
-    borderWidth: 2,
-    borderStyle: 'dashed',
+    backgroundColor: AppTheme.colors.card,
+    borderRadius: AppTheme.roundness,
+    borderWidth: 1,
     borderColor: AppTheme.colors.border,
-    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
     overflow: 'hidden',
+    marginBottom: AppTheme.spacing.md,
   },
   photoPlaceholder: {
     color: AppTheme.colors.border,
+    fontSize: AppTheme.typography.body,
   },
   photo: {
     width: '100%',
     height: '100%',
   },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+  actionButton: {
+    backgroundColor: AppTheme.colors.primary,
+    paddingVertical: AppTheme.spacing.sm * 1.5,
+    paddingHorizontal: AppTheme.spacing.lg,
+    borderRadius: AppTheme.roundness,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resultCard: {
-    marginTop: 24,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    marginBottom: AppTheme.spacing.md,
     elevation: 2,
-    width: '100%',
   },
-  resultTitle: {
+  actionText: {
+    color: '#fff',
+    fontSize: AppTheme.typography.body,
+    fontWeight: '600',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  card: {
+    width: '100%',
+    backgroundColor: AppTheme.colors.card,
+    borderRadius: AppTheme.roundness,
+    padding: AppTheme.spacing.md,
+    elevation: 2,
+    marginTop: AppTheme.spacing.md,
+  },
+  cardTitle: {
+    fontSize: AppTheme.typography.h3,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: AppTheme.spacing.sm,
+    color: AppTheme.colors.text,
   },
   summary: {
-    marginBottom: 12,
+    fontSize: AppTheme.typography.body,
+    marginBottom: AppTheme.spacing.md,
     color: AppTheme.colors.text,
   },
   dishContainer: {
-    marginBottom: 8,
-    borderBottomWidth: 1,
+    borderTopWidth: 1,
     borderColor: AppTheme.colors.border,
+    paddingVertical: AppTheme.spacing.sm,
   },
   dishHeader: {
-    paddingVertical: 8,
+    paddingVertical: AppTheme.spacing.xs,
   },
   dishText: {
-    fontSize: 16,
+    fontSize: AppTheme.typography.body,
     fontWeight: '500',
     color: AppTheme.colors.text,
   },
   macroTable: {
-    paddingLeft: 16,
-    paddingBottom: 8,
+    paddingLeft: AppTheme.spacing.md,
   },
   macroRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 2,
+    paddingVertical: AppTheme.spacing.xs,
   },
   macroName: {
-    fontSize: 14,
+    fontSize: AppTheme.typography.small,
     color: AppTheme.colors.text,
   },
   macroValue: {
-    fontSize: 14,
+    fontSize: AppTheme.typography.small,
     color: AppTheme.colors.text,
   },
 })

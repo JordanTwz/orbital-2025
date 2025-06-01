@@ -1,23 +1,36 @@
 // screens/HomeScreen.tsx
 import React from 'react'
-import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import type { RootStackParamList } from '../App'
 import { AppTheme } from '../theme'
+import { logout } from '../firebase'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>
 
 export default function HomeScreen({ navigation }: Props) {
+  const handleLogout = async () => {
+    await logout()
+    navigation.replace('SignIn')
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.screen}>
       <View style={styles.container}>
-        <Text style={styles.title}>Welcome to MealCraft!</Text>
+        <Text style={styles.title}>MealCraft</Text>
+
         <TouchableOpacity
-          style={styles.button}
-          accessibilityLabel="Log a meal"
+          style={styles.primaryButton}
           onPress={() => navigation.navigate('MealLog')}
         >
-          <Text style={styles.buttonText}>Log a Meal</Text>
+          <Text style={styles.primaryButtonText}>Log a Meal</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={handleLogout}
+        >
+          <Text style={styles.secondaryButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -25,15 +38,47 @@ export default function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea:  { flex: 1, backgroundColor: AppTheme.colors.background },
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
-  title:     { fontSize: 24, marginBottom: 24, color: AppTheme.colors.text },
-  button:    {
-    backgroundColor: AppTheme.colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    elevation: 4,
+  screen: {
+    flex: 1,
+    backgroundColor: AppTheme.colors.background,
   },
-  buttonText: { color: '#ffffff', fontSize: 16, fontWeight: 'bold' },
+  container: {
+    flex: 1,
+    padding: AppTheme.spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: AppTheme.typography.h2,
+    fontWeight: 'bold',
+    color: AppTheme.colors.primary,
+    marginBottom: AppTheme.spacing.lg,
+  },
+  primaryButton: {
+    width: '80%',
+    backgroundColor: AppTheme.colors.primary,
+    paddingVertical: AppTheme.spacing.sm * 2,
+    borderRadius: AppTheme.roundness,
+    alignItems: 'center',
+    marginBottom: AppTheme.spacing.md,
+    elevation: 3,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: AppTheme.typography.body,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    width: '80%',
+    backgroundColor: AppTheme.colors.notification,
+    paddingVertical: AppTheme.spacing.sm * 2,
+    borderRadius: AppTheme.roundness,
+    alignItems: 'center',
+    elevation: 2,
+  },
+  secondaryButtonText: {
+    color: '#fff',
+    fontSize: AppTheme.typography.body,
+    fontWeight: '600',
+  },
 })

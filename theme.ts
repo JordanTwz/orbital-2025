@@ -1,18 +1,29 @@
 // theme.ts
-import { DefaultTheme, Theme } from '@react-navigation/native'
+import { DefaultTheme } from '@react-navigation/native'
 
-export const AppTheme: Theme = {
+export const AppTheme = {
   ...DefaultTheme,
-  // We can toggle 'dark' here if we ever want a dark theme :) can we explore changing based on system settings?
-  // For now, we’ll keep it light
-  dark: false,
   colors: {
-    ...DefaultTheme.colors,
-    primary:      '#6200ee', // future: consider making this customisable
-    background:   '#ffffff',
-    card:         '#ffffff',
-    text:         '#333333',
-    border:       '#cccccc',
-    notification: '#ff80ab',
+    primary:    '#1E88E5',  // vivid blue
+    background: '#F5F5F5',  // light gray
+    card:       '#FFFFFF',
+    text:       '#212121',
+    border:     '#E0E0E0',
+    notification: '#FFC107', // amber
   },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+  typography: {
+    h1: 32,
+    h2: 24,
+    h3: 20,
+    body: 16,
+    small: 14,
+  },
+  roundness: 8,
 }
