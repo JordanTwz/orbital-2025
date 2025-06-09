@@ -8,6 +8,15 @@ import {
   signOut,
   User,
 } from 'firebase/auth';
+import {
+    getFireStore,
+    doc,
+    setDoc,
+    updateDoc,
+    arrayUnion,
+    ArrayRemove,
+    getDoc
+    } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDB0LQru_C36-S07Zfk0D470F1czxJ6XUg',
@@ -20,9 +29,15 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 export function register(email: string, password: string) {
-  return createUserWithEmailAndPassword(auth, email, password);
+  const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
+  const user = userCredentials.user;
+
+  await createUserDocument(user.uid);
+
+  return user;
 }
 
 export function login(email: string, password: string) {
@@ -38,3 +53,49 @@ export function subscribeToAuthChanges(
 ) {
   return onAuthStateChanged(auth, callback);
 }
+
+export async function sendFriendRequest(senderId: string, receiverId: string) {
+    const senderRef = doc(db, "users", senderId);
+    const receiverRef = doc(db, "users", receiverId);
+
+    await updateDoc(senderRef, {
+        outgoingRequests: arrayUnion(receiverId)
+        });
+
+    await updateDoc(receiverRef, {incomingRequests: arrayUnion(senderId)
+        });
+    }
+
+export async function acceptFriendRequest(currentUserId: string, requesterId: string) {
+    const currentUserRef = doc(db, "users", currentUserId);
+    const requesterRef = doc(db, "users", requesterId);
+
+    await updateDoc(currentUserRef, {
+        incomingRequests: arrayRemove(requesterId),
+        friends; arrayUnion(requesterId)
+        });
+
+    await updateDoc(requesterRef, {
+        outgoingRequests: arrayRemove(currentUserId),
+        friends; arrayUnion(currentUserId)
+        });
+    }
+
+export async function getFriends(userId: string) {
+    const userDoc = getDoc(doc(db, "users", userId));
+
+    if(userDoc.exists()) {
+        return userDoc.data().friends || [];
+        }
+    return [];
+    }
+
+export async function createUserDocument(userId: string) {
+    const userRef = doc(db, "users", userId);
+
+    await setDoc(userRef, {
+        friends: [],
+        incomingRequests: [],
+        outgoingRequests: []
+        });
+    }
