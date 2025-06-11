@@ -8,6 +8,9 @@ import SignInScreen from './screens/SignInScreen'
 import SignUpScreen from './screens/SignUpScreen'
 import HomeScreen from './screens/HomeScreen'
 import MealLogScreen from './screens/MealLogScreen'
+import SearchUsersScreen from './screens/SearchUsersScreen'
+import FriendRequestsScreen from './screens/FriendRequestsScreen'
+import FriendsListScreen from './screens/FriendsListScreen'
 import { AppTheme } from './theme'
 
 export type RootStackParamList = {
@@ -15,6 +18,11 @@ export type RootStackParamList = {
   SignUp: undefined
   Home: undefined
   MealLog: undefined
+    SearchUsers: undefined
+    FriendRequests: undefined
+    FriendsList: undefined
+
+
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -82,6 +90,21 @@ export default function App() {
           component={MealLogScreen}
           options={{ title: 'Log a Meal' }}
         />
+          <Stack.Screen
+              name="SearchUsers"
+              component={SearchUsersScreen}
+              options={{ title: 'Search Users' }}
+              />
+          <Stack.Screen
+              name="FriendRequests"
+              component={FriendRequestsScreen}
+              options={{ title: 'Friend Requests' }}
+              />
+          <Stack.Screen
+              name="FriendsList"
+              component={FriendsListScreen}
+              options={{ title: 'Friends List' }}
+              />
       </Stack.Navigator>
     </NavigationContainer>
   )

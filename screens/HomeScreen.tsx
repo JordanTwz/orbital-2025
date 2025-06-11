@@ -27,6 +27,27 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => navigation.navigate('SearchUsers')}
+          >
+        <Text style={styles.primaryButtonText}>Search Users</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => navigation.navigate('FriendRequests')}
+          >
+          <Text style={styles.primaryButtonText}>Friend Requests</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={() => navigation.navigate('FriendsList')}
+        >
+          <Text style={styles.primaryButtonText}>My Friends</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.secondaryButton}
           onPress={handleLogout}
         >

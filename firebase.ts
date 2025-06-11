@@ -9,12 +9,12 @@ import {
   User,
 } from 'firebase/auth';
 import {
-    getFireStore,
+    getFirestore,
     doc,
     setDoc,
     updateDoc,
     arrayUnion,
-    ArrayRemove,
+    arrayRemove,
     getDoc
     } from 'firebase/firestore'
 
@@ -31,11 +31,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-export function register(email: string, password: string) {
+export async function register(email: string, password: string) {
   const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredentials.user;
 
-  await createUserDocument(user.uid);
+  await createUserDocument(user.uid, email);
 
   return user;
 }
@@ -72,17 +72,17 @@ export async function acceptFriendRequest(currentUserId: string, requesterId: st
 
     await updateDoc(currentUserRef, {
         incomingRequests: arrayRemove(requesterId),
-        friends; arrayUnion(requesterId)
+        friends: arrayUnion(requesterId)
         });
 
     await updateDoc(requesterRef, {
         outgoingRequests: arrayRemove(currentUserId),
-        friends; arrayUnion(currentUserId)
+        friends: arrayUnion(currentUserId)
         });
     }
 
 export async function getFriends(userId: string) {
-    const userDoc = getDoc(doc(db, "users", userId));
+    const userDoc = await getDoc(doc(db, "users", userId));
 
     if(userDoc.exists()) {
         return userDoc.data().friends || [];
@@ -90,10 +90,11 @@ export async function getFriends(userId: string) {
     return [];
     }
 
-export async function createUserDocument(userId: string) {
+export async function createUserDocument(userId: string, email: string) {
     const userRef = doc(db, "users", userId);
 
     await setDoc(userRef, {
+        email: email,
         friends: [],
         incomingRequests: [],
         outgoingRequests: []
