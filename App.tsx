@@ -1,40 +1,59 @@
 // App.tsx
-import React, { useState, useEffect } from 'react'
-import { SafeAreaView, ActivityIndicator, View, Text, TouchableOpacity } from 'react-native'
-import { NavigationContainer } from '@react-navigation/native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { subscribeToAuthChanges, logout } from './firebase'
-import SignInScreen from './screens/SignInScreen'
-import SignUpScreen from './screens/SignUpScreen'
-import HomeScreen from './screens/HomeScreen'
-import MealLogScreen from './screens/MealLogScreen'
-import { AppTheme } from './theme'
+import React, { useState, useEffect } from 'react';
+import {
+  SafeAreaView,
+  ActivityIndicator,
+  View,
+  Text,
+  TouchableOpacity
+} from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {
+  subscribeToAuthChanges,
+  logout
+} from './firebase';
+import SignInScreen from './screens/SignInScreen';
+import SignUpScreen from './screens/SignUpScreen';
+import HomeScreen from './screens/HomeScreen';
+import MealLogScreen from './screens/MealLogScreen';
+import MealHistoryScreen from './screens/MealHistoryScreen';
+import { AppTheme } from './theme';
 
 export type RootStackParamList = {
-  SignIn: undefined
-  SignUp: undefined
-  Home: undefined
-  MealLog: undefined
-}
+  SignIn: undefined;
+  SignUp: undefined;
+  Home: undefined;
+  MealLog: undefined;
+  MealHistory: undefined;
+  MealDetail: { log: any };
+};
 
-const Stack = createNativeStackNavigator<RootStackParamList>()
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-  const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList | null>(null)
+  const [initialRoute, setInitialRoute] =
+    useState<keyof RootStackParamList | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges(user => {
-      setInitialRoute(user ? 'Home' : 'SignIn')
-    })
-    return unsubscribe
-  }, [])
+      setInitialRoute(user ? 'Home' : 'SignIn');
+    });
+    return unsubscribe;
+  }, []);
 
   if (!initialRoute) {
     return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <SafeAreaView
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}
+      >
         <ActivityIndicator size="large" />
       </SafeAreaView>
-    )
+    );
   }
 
   return (
@@ -65,8 +84,8 @@ export default function App() {
             headerRight: () => (
               <TouchableOpacity
                 onPress={async () => {
-                  await logout()
-                  navigation.replace('SignIn')
+                  await logout();
+                  navigation.replace('SignIn');
                 }}
                 style={{ marginRight: 16 }}
               >
@@ -82,7 +101,13 @@ export default function App() {
           component={MealLogScreen}
           options={{ title: 'Log a Meal' }}
         />
+        <Stack.Screen
+          name="MealHistory"
+          component={MealHistoryScreen}
+          options={{ title: 'History' }}
+        />
+        {/* can we implement MealDetailScreen for dish breakdown on tap? */}
       </Stack.Navigator>
     </NavigationContainer>
-  )
+  );
 }
