@@ -1,5 +1,5 @@
 // screens/MealLogScreen.tsx
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -10,67 +10,69 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
-} from 'react-native'
-import * as ImagePicker from 'expo-image-picker'
-import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import type { RootStackParamList } from '../App'
-import { AppTheme } from '../theme'
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { getAuth } from 'firebase/auth';
+import { addMealLog } from '../firebase';
+import type { RootStackParamList } from '../App';
+import { AppTheme } from '../theme';
 
 type Dish = {
-  name: string
-  calories: number
+  name: string;
+  calories: number;
   macros: {
-    carbs: number
-    fats: number
-    proteins: number
-  }
-}
+    carbs: number;
+    fats: number;
+    proteins: number;
+  };
+};
 
 type Analysis = {
-  description: string
-  totalCalories: number
-  dishes: Dish[]
-}
+  description: string;
+  totalCalories: number;
+  dishes: Dish[];
+};
 
 // IMPORTANT: replace with your IPv4 address
 // Can we explore using ngrok or a similar service for easier testing?
 const SERVER = 'http://192.168.XX.XX:3000'
 
-type Props = NativeStackScreenProps<RootStackParamList, 'MealLog'>
+type Props = NativeStackScreenProps<RootStackParamList, 'MealLog'>;
 
 export default function MealLogScreen({}: Props) {
-  const [imageUri, setImageUri] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [analysis, setAnalysis] = useState<Analysis | null>(null)
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission denied', 'We need access to your photos.')
-      return
+      Alert.alert('Permission denied', 'We need access to your photos.');
+      return;
     }
     const picker = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.7,
-    })
+    });
     if (!picker.canceled) {
-      setImageUri(picker.assets[0].uri)
-      setAnalysis(null)
-      setExpandedIndex(null)
+      setImageUri(picker.assets[0].uri);
+      setAnalysis(null);
+      setExpandedIndex(null);
     }
-  }
+  };
 
   const analyzeImage = async () => {
-    if (!imageUri) return
-    setLoading(true)
+    if (!imageUri) return;
+    setLoading(true);
     try {
-      const uriParts = imageUri.split('/')
-      const fileName = uriParts.pop() || 'photo.jpg'
-      const match = /\.(\w+)$/.exec(fileName)
-      const fileType = match ? `image/${match[1]}` : 'image'
+      const uriParts = imageUri.split('/');
+      const fileName = uriParts.pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(fileName);
+      const fileType = match ? `image/${match[1]}` : 'image';
 
-      const formData = new FormData()
+      const formData = new FormData();
       formData.append(
         'photo',
         {
@@ -78,28 +80,39 @@ export default function MealLogScreen({}: Props) {
           name: fileName,
           type: fileType,
         } as any
-      )
+      );
 
       const resp = await fetch(`${SERVER}/analyze`, {
         method: 'POST',
         body: formData,
         headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      });
 
       if (!resp.ok) {
-        const err = await resp.json()
-        throw new Error(err.error || 'Server error')
+        const err = await resp.json();
+        throw new Error(err.error || 'Server error');
       }
 
-      const json = (await resp.json()) as Analysis
-      setAnalysis(json)
+      const json = (await resp.json()) as Analysis;
+      setAnalysis(json);
+
+      // — Save to Firestore —
+      const uid = getAuth().currentUser?.uid;
+      if (uid) {
+        await addMealLog(uid, {
+          description: json.description,
+          totalCalories: json.totalCalories,
+          dishes: json.dishes,
+          timestamp: Date.now(),
+        });
+      }
     } catch (err: any) {
-      console.error(err)
-      Alert.alert('Error', err.message || 'Analysis failed')
+      console.error(err);
+      Alert.alert('Error', err.message || 'Analysis failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -160,7 +173,7 @@ export default function MealLogScreen({}: Props) {
         )}
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -266,4 +279,4 @@ const styles = StyleSheet.create({
     fontSize: AppTheme.typography.small,
     color: AppTheme.colors.text,
   },
-})
+});
