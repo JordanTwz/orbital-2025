@@ -17,7 +17,9 @@ import {
   orderBy,
   doc,
   setDoc,
-  deleteDoc} from 'firebase/firestore';
+  updateDoc,
+  deleteDoc
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDB0LQru_C36-S07Zfk0D470F1czxJ6XUg',
@@ -28,9 +30,11 @@ const firebaseConfig = {
   appId: '1:917444169063:web:c92ed7364cc7abd71bf3c2',
 };
 
-const app  = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
+
+// Authentication
 
 export function register(email: string, password: string) {
   return createUserWithEmailAndPassword(auth, email, password);
@@ -48,11 +52,9 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
 }
 
-// ——— Firestore helpers ———
+// — Meal-history helpers —
 
-/**
- * Add a meal log under users/{uid}/mealLogs
- */
+// Add a meal log under users/{uid}/mealLogs
 export async function addMealLog(
   uid: string,
   log: {
@@ -70,9 +72,7 @@ export async function addMealLog(
   return addDoc(colRef, log);
 }
 
-/**
- * Fetch all meal logs for a user, ordered by timestamp desc
- */
+// Fetch all meal logs for a user, ordered by timestamp desc
 export async function getMealLogs(uid: string) {
   const colRef = collection(db, 'users', uid, 'mealLogs');
   const q      = query(colRef, orderBy('timestamp', 'desc'));
@@ -80,11 +80,35 @@ export async function getMealLogs(uid: string) {
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
+// Update an existing meal log
+export async function updateMealLog(
+  uid: string,
+  id: string,
+  updates: Partial<{
+    description: string;
+    totalCalories: number;
+    dishes: {
+      name: string;
+      calories: number;
+      macros: { carbs: number; fats: number; proteins: number };
+    }[];
+    timestamp: number;
+  }>
+) {
+  const docRef = doc(db, 'users', uid, 'mealLogs', id);
+  return updateDoc(docRef, updates);
+}
+
+// Delete a meal log
+export async function deleteMealLog(uid: string, id: string) {
+  const docRef = doc(db, 'users', uid, 'mealLogs', id);
+  return deleteDoc(docRef);
+}
+
+// — Friend-request helpers —
+
 /**
- *
- * @param uid
- * @param friendUid
- * Sends a request from uid to friendUid
+ * Send a friend request from uid → friendUid
  */
 export async function sendFriendRequest(uid: string, friendUid: string) {
   const outgoingRef = doc(db, 'users', uid, 'outgoingRequests', friendUid);
@@ -99,19 +123,17 @@ export async function sendFriendRequest(uid: string, friendUid: string) {
 
   await setDoc(outgoingRef, requestData);
   await setDoc(incomingRef, requestData);
-
 }
 
 /**
  * Accept a friend request
  */
 export async function acceptFriend(uid: string, friendUid: string) {
-  const incomingRef = doc(db, 'users', friendUid, 'incomingRequests', uid);
-  const outgoingRef = doc(db, 'users', uid, 'outgoingRequests', friendUid);
-
-  const myFriendRef = doc(db, 'users', uid, 'friends', friendUid);
+  const incomingRef   = doc(db, 'users', friendUid, 'incomingRequests', uid);
+  const outgoingRef   = doc(db, 'users', uid, 'outgoingRequests', friendUid);
+  const myFriendRef   = doc(db, 'users', uid, 'friends', friendUid);
   const theirFriendRef = doc(db, 'users', friendUid, 'friends', uid);
-  //Add to friends for both users
+
   await setDoc(myFriendRef, {
     uid: friendUid,
     since: Date.now(),
@@ -119,11 +141,9 @@ export async function acceptFriend(uid: string, friendUid: string) {
   await setDoc(theirFriendRef, {
     uid: uid,
     since: Date.now(),
-  })
-  //Remove the friend requests
+  });
   await deleteDoc(incomingRef);
   await deleteDoc(outgoingRef);
-
 }
 
 /**
@@ -138,7 +158,7 @@ export async function rejectFriend(uid: string, friendUid: string) {
 }
 
 /**
- * Cancel a friend request
+ * Cancel a sent friend request
  */
 export async function cancelFriendRequest(uid: string, friendUid: string) {
   const outgoingRef = doc(db, 'users', uid, 'outgoingRequests', friendUid);
@@ -152,36 +172,36 @@ export async function cancelFriendRequest(uid: string, friendUid: string) {
  * Remove a friend (unfriend)
  */
 export async function removeFriend(uid: string, friendUid: string) {
-  const myFriendRef = doc(db, 'users', uid, 'friends', friendUid);
+  const myFriendRef    = doc(db, 'users', uid, 'friends', friendUid);
   const theirFriendRef = doc(db, 'users', friendUid, 'friends', uid);
+
   await deleteDoc(myFriendRef);
   await deleteDoc(theirFriendRef);
 }
 
 /**
- * Get list of current friends
+ * List current friends
  */
-
 export async function getFriends(uid: string) {
   const myFriendsRef = collection(db, 'users', uid, 'friends');
-  const snap = await getDocs(myFriendsRef);
+  const snap         = await getDocs(myFriendsRef);
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 /**
- * Get incoming friend requests
+ * List incoming friend requests
  */
 export async function getIncomingRequests(uid: string) {
   const incomingRef = collection(db, 'users', uid, 'incomingRequests');
-  const snap = await getDocs(incomingRef);
+  const snap        = await getDocs(incomingRef);
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 
 /**
- * Get outgoing friend requests
+ * List outgoing friend requests
  */
 export async function getOutgoingRequests(uid: string) {
   const outgoingRef = collection(db, 'users', uid, 'outgoingRequests');
-  const snap = await getDocs(outgoingRef);
+  const snap        = await getDocs(outgoingRef);
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }

@@ -1,5 +1,5 @@
 // screens/MealHistoryScreen.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   SafeAreaView,
   FlatList,
@@ -7,11 +7,13 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
-  StyleSheet
+  StyleSheet,
+  Alert
 } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getAuth } from 'firebase/auth';
-import { getMealLogs } from '../firebase';
+import { getMealLogs, deleteMealLog } from '../firebase';
 import type { RootStackParamList } from '../App';
 import { AppTheme } from '../theme';
 
@@ -33,15 +35,38 @@ export default function MealHistoryScreen({ navigation }: Props) {
   const [logs, setLogs] = useState<MealLog[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      const uid = getAuth().currentUser?.uid;
-      if (!uid) return;
+  const fetchLogs = async () => {
+    setLoading(true);
+    const uid = getAuth().currentUser?.uid;
+    if (!uid) return;
+    try {
       const data = await getMealLogs(uid);
       setLogs(data as MealLog[]);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to load history');
+    } finally {
       setLoading(false);
-    })();
-  }, []);
+    }
+  };
+
+  // refetch every time this screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchLogs();
+    }, [])
+  );
+
+  const handleDelete = async (id: string) => {
+    const uid = getAuth().currentUser?.uid;
+    if (!uid) return;
+    try {
+      await deleteMealLog(uid, id);
+      // update local state immediately
+      setLogs(current => current.filter(log => log.id !== id));
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to delete meal');
+    }
+  };
 
   if (loading) {
     return (
@@ -58,19 +83,31 @@ export default function MealHistoryScreen({ navigation }: Props) {
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() =>
-              navigation.navigate('MealDetail', { log: item })
-            }
-          >
-            <Text style={styles.date}>
-              {new Date(item.timestamp).toLocaleString()}
-            </Text>
-            <Text style={styles.summary}>
-              {item.description} — {item.totalCalories} kcal
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.item}>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('MealDetail', { log: item })
+              }
+            >
+              <Text style={styles.date}>
+                {new Date(item.timestamp).toLocaleString()}
+              </Text>
+              <Text style={styles.summary}>
+                {item.description} — {item.totalCalories} kcal
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('EditMeal', { log: item })}
+              >
+                <Text style={styles.editText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDelete(item.id)}>
+                <Text style={styles.deleteText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
       />
     </SafeAreaView>
@@ -101,6 +138,20 @@ const styles = StyleSheet.create({
     fontSize: AppTheme.typography.body,
     color: AppTheme.colors.text,
     fontWeight: '500',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: AppTheme.spacing.sm,
+  },
+  editText: {
+    marginRight: AppTheme.spacing.lg,
+    color: AppTheme.colors.primary,
+    fontWeight: '600',
+  },
+  deleteText: {
+    color: AppTheme.colors.notification,
+    fontWeight: '600',
   },
   center: {
     flex: 1,

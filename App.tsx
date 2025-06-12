@@ -1,4 +1,3 @@
-// App.tsx
 import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
@@ -9,15 +8,15 @@ import {
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import {
-  subscribeToAuthChanges,
-  logout
-} from './firebase';
+import { subscribeToAuthChanges, logout } from './firebase';
 import SignInScreen from './screens/SignInScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import HomeScreen from './screens/HomeScreen';
 import MealLogScreen from './screens/MealLogScreen';
 import MealHistoryScreen from './screens/MealHistoryScreen';
+import MealDetailScreen from './screens/MealDetailScreen';
+import EditMealScreen from './screens/EditMealScreen';
+import TrendsScreen from './screens/TrendsScreen';
 import { AppTheme } from './theme';
 
 export type RootStackParamList = {
@@ -27,6 +26,8 @@ export type RootStackParamList = {
   MealLog: undefined;
   MealHistory: undefined;
   MealDetail: { log: any };
+  EditMeal: { log: any };
+  Trends: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -44,13 +45,7 @@ export default function App() {
 
   if (!initialRoute) {
     return (
-      <SafeAreaView
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}
-      >
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
       </SafeAreaView>
     );
@@ -76,6 +71,7 @@ export default function App() {
           component={SignUpScreen}
           options={{ headerShown: false }}
         />
+
         <Stack.Screen
           name="Home"
           component={HomeScreen}
@@ -89,13 +85,12 @@ export default function App() {
                 }}
                 style={{ marginRight: 16 }}
               >
-                <Text style={{ color: '#ffffff', fontSize: 16 }}>
-                  Logout
-                </Text>
+                <Text style={{ color: '#ffffff', fontSize: 16 }}>Logout</Text>
               </TouchableOpacity>
             ),
           })}
         />
+
         <Stack.Screen
           name="MealLog"
           component={MealLogScreen}
@@ -106,7 +101,22 @@ export default function App() {
           component={MealHistoryScreen}
           options={{ title: 'History' }}
         />
-        {/* can we implement MealDetailScreen for dish breakdown on tap? */}
+        <Stack.Screen
+          name="MealDetail"
+          component={MealDetailScreen}
+          options={{ title: 'Meal Details' }}
+        />
+        <Stack.Screen
+          name="EditMeal"
+          component={EditMealScreen}
+          options={{ title: 'Edit Meal' }}
+        />
+
+        <Stack.Screen
+          name="Trends"
+          component={TrendsScreen}
+          options={{ title: 'Eating Trends' }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
