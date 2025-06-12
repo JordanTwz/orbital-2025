@@ -18,7 +18,8 @@ import {
   doc,
   setDoc,
   updateDoc,
-  deleteDoc
+  deleteDoc,
+  getDoc
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -204,4 +205,16 @@ export async function getOutgoingRequests(uid: string) {
   const outgoingRef = collection(db, 'users', uid, 'outgoingRequests');
   const snap        = await getDocs(outgoingRef);
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+/**
+ * Look up user by UID
+ */
+export async function searchUser(uid: string) {
+  const userDoc = await getDoc(doc(db, 'users', uid));
+  if(userDoc.exists()) {
+    return  { id: userDoc.id, ...userDoc.data() };
+  } else {
+    return null;
+  }
 }
