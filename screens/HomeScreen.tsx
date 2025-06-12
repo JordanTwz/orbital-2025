@@ -1,19 +1,12 @@
-// screens/HomeScreen.tsx
 import React from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../App';
 import { AppTheme } from '../theme';
-import { logout } from '../firebase';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
-  const handleLogout = async () => {
-    await logout();
-    navigation.replace('SignIn');
-  };
-
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.container}>
@@ -34,10 +27,10 @@ export default function HomeScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.tertiaryButton}
-          onPress={handleLogout}
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate('Trends')}
         >
-          <Text style={styles.tertiaryButtonText}>Logout</Text>
+          <Text style={styles.secondaryButtonText}>Trends</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -88,19 +81,6 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: AppTheme.colors.primary,
-    fontSize: AppTheme.typography.body,
-    fontWeight: '600',
-  },
-  tertiaryButton: {
-    width: '80%',
-    backgroundColor: AppTheme.colors.notification,
-    paddingVertical: AppTheme.spacing.sm * 2,
-    borderRadius: AppTheme.roundness,
-    alignItems: 'center',
-    elevation: 2,
-  },
-  tertiaryButtonText: {
-    color: '#fff',
     fontSize: AppTheme.typography.body,
     fontWeight: '600',
   },

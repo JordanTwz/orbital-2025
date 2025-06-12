@@ -14,7 +14,10 @@ import {
   addDoc,
   getDocs,
   query,
-  orderBy
+  orderBy,
+  doc,
+  updateDoc,
+  deleteDoc
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -26,7 +29,7 @@ const firebaseConfig = {
   appId: '1:917444169063:web:c92ed7364cc7abd71bf3c2',
 };
 
-const app  = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
@@ -46,11 +49,9 @@ export function subscribeToAuthChanges(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
 }
 
-// ——— Firestore helpers ———
+// Firestore helpers
 
-/**
- * Add a meal log under users/{uid}/mealLogs
- */
+// Add a meal log under users/{uid}/mealLogs
 export async function addMealLog(
   uid: string,
   log: {
@@ -68,12 +69,35 @@ export async function addMealLog(
   return addDoc(colRef, log);
 }
 
-/**
- * Fetch all meal logs for a user, ordered by timestamp desc
- */
+// Fetch all meal logs for a user, ordered by timestamp desc
 export async function getMealLogs(uid: string) {
   const colRef = collection(db, 'users', uid, 'mealLogs');
   const q      = query(colRef, orderBy('timestamp', 'desc'));
   const snap   = await getDocs(q);
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+// Update an existing meal log 
+export async function updateMealLog(
+  uid: string,
+  id: string,
+  updates: Partial<{
+    description: string;
+    totalCalories: number;
+    dishes: {
+      name: string;
+      calories: number;
+      macros: { carbs: number; fats: number; proteins: number };
+    }[];
+    timestamp: number;
+  }>
+) {
+  const docRef = doc(db, 'users', uid, 'mealLogs', id);
+  return updateDoc(docRef, updates);
+}
+
+// Delete a meal log
+export async function deleteMealLog(uid: string, id: string) {
+  const docRef = doc(db, 'users', uid, 'mealLogs', id);
+  return deleteDoc(docRef);
 }

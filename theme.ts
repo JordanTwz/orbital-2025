@@ -9,7 +9,7 @@ export const AppTheme = {
     card:       '#FFFFFF',
     text:       '#212121',
     border:     '#E0E0E0',
-    notification: '#FFC107', // amber
+    notification: '#FF4507', // orange
   },
   spacing: {
     xs: 4,
