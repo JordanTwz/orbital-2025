@@ -1,5 +1,12 @@
+// screens/HomeScreen.tsx
 import React from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet
+} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../App';
 import { AppTheme } from '../theme';
@@ -10,8 +17,10 @@ export default function HomeScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.container}>
+
         <Text style={styles.title}>MealCraft</Text>
 
+        {/* Primary action */}
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() => navigation.navigate('MealLog')}
@@ -19,19 +28,46 @@ export default function HomeScreen({ navigation }: Props) {
           <Text style={styles.primaryButtonText}>Log a Meal</Text>
         </TouchableOpacity>
 
+        {/* Meal Insights Section */}
+        <Text style={styles.sectionHeader}>Meal Insights</Text>
+        <View style={styles.gridRow}>
+          <TouchableOpacity
+            style={styles.gridButton}
+            onPress={() => navigation.navigate('MealHistory')}
+          >
+            <Text style={styles.gridButtonText}>History</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.gridButton}
+            onPress={() => navigation.navigate('Trends')}
+          >
+            <Text style={styles.gridButtonText}>Trends</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Community Section */}
+        <Text style={[styles.sectionHeader, styles.socialHeader]}>Community</Text>
+        <View style={styles.gridRow}>
+          <TouchableOpacity
+            style={styles.gridButton}
+            onPress={() => navigation.navigate('FriendsList')}
+          >
+            <Text style={styles.gridButtonText}>Friends</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.gridButton}
+            onPress={() => navigation.navigate('FriendRequests')}
+          >
+            <Text style={styles.gridButtonText}>Requests</Text>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('MealHistory')}
+          style={styles.tertiaryButton}
+          onPress={() => navigation.navigate('SearchUsers')}
         >
-          <Text style={styles.secondaryButtonText}>History</Text>
+          <Text style={styles.tertiaryButtonText}>Add Friend</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('Trends')}
-        >
-          <Text style={styles.secondaryButtonText}>Trends</Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -46,21 +82,21 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: AppTheme.spacing.md,
     justifyContent: 'center',
-    alignItems: 'center',
   },
   title: {
     fontSize: AppTheme.typography.h2,
     fontWeight: 'bold',
     color: AppTheme.colors.primary,
+    textAlign: 'center',
     marginBottom: AppTheme.spacing.lg,
   },
   primaryButton: {
-    width: '80%',
+    width: '100%',
     backgroundColor: AppTheme.colors.primary,
     paddingVertical: AppTheme.spacing.sm * 2,
     borderRadius: AppTheme.roundness,
     alignItems: 'center',
-    marginBottom: AppTheme.spacing.md,
+    marginBottom: AppTheme.spacing.lg,
     elevation: 3,
   },
   primaryButtonText: {
@@ -68,18 +104,47 @@ const styles = StyleSheet.create({
     fontSize: AppTheme.typography.body,
     fontWeight: '600',
   },
-  secondaryButton: {
-    width: '80%',
+  sectionHeader: {
+    fontSize: AppTheme.typography.h3,
+    fontWeight: '600',
+    color: AppTheme.colors.text,
+    marginBottom: AppTheme.spacing.sm,
+  },
+  socialHeader: {
+    marginTop: AppTheme.spacing.lg,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: AppTheme.spacing.md,
+  },
+  gridButton: {
+    width: '48%',
     backgroundColor: AppTheme.colors.card,
     borderWidth: 1,
     borderColor: AppTheme.colors.primary,
-    paddingVertical: AppTheme.spacing.sm * 2,
+    paddingVertical: AppTheme.spacing.sm * 1.5,
     borderRadius: AppTheme.roundness,
     alignItems: 'center',
-    marginBottom: AppTheme.spacing.md,
     elevation: 1,
   },
-  secondaryButtonText: {
+  gridButtonText: {
+    color: AppTheme.colors.primary,
+    fontSize: AppTheme.typography.body,
+    fontWeight: '600',
+  },
+  tertiaryButton: {
+    width: '100%',
+    backgroundColor: AppTheme.colors.card,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.primary,
+    paddingVertical: AppTheme.spacing.sm * 1.5,
+    borderRadius: AppTheme.roundness,
+    alignItems: 'center',
+    marginTop: AppTheme.spacing.md,
+    elevation: 1,
+  },
+  tertiaryButtonText: {
     color: AppTheme.colors.primary,
     fontSize: AppTheme.typography.body,
     fontWeight: '600',
