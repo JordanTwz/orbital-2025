@@ -86,7 +86,7 @@ export async function getMealLogs(uid: string) {
  * @param friendUid
  * Sends a request from uid to friendUid
  */
-export async function addFriend(uid: string, friendUid: string) {
+export async function sendFriendRequest(uid: string, friendUid: string) {
   const outgoingRef = doc(db, 'users', uid, 'outgoingRequests', friendUid);
   const incomingRef = doc(db, 'users', friendUid, 'incomingRequests', uid);
 
@@ -127,6 +127,38 @@ export async function acceptFriend(uid: string, friendUid: string) {
 }
 
 /**
+ * Reject a friend request
+ */
+export async function rejectFriend(uid: string, friendUid: string) {
+  const incomingRef = doc(db, 'users', friendUid, 'incomingRequests', uid);
+  const outgoingRef = doc(db, 'users', uid, 'outgoingRequests', friendUid);
+
+  await deleteDoc(incomingRef);
+  await deleteDoc(outgoingRef);
+}
+
+/**
+ * Cancel a friend request
+ */
+export async function cancelFriendRequest(uid: string, friendUid: string) {
+  const outgoingRef = doc(db, 'users', uid, 'outgoingRequests', friendUid);
+  const incomingRef = doc(db, 'users', friendUid, 'incomingRequests', uid);
+
+  await deleteDoc(outgoingRef);
+  await deleteDoc(incomingRef);
+}
+
+/**
+ * Remove a friend (unfriend)
+ */
+export async function removeFriend(uid: string, friendUid: string) {
+  const myFriendRef = doc(db, 'users', uid, 'friends', friendUid);
+  const theirFriendRef = doc(db, 'users', friendUid, 'friends', uid);
+  await deleteDoc(myFriendRef);
+  await deleteDoc(theirFriendRef);
+}
+
+/**
  * Get list of current friends
  */
 
@@ -142,5 +174,14 @@ export async function getFriends(uid: string) {
 export async function getIncomingRequests(uid: string) {
   const incomingRef = collection(db, 'users', uid, 'incomingRequests');
   const snap = await getDocs(incomingRef);
+  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+/**
+ * Get outgoing friend requests
+ */
+export async function getOutgoingRequests(uid: string) {
+  const outgoingRef = collection(db, 'users', uid, 'outgoingRequests');
+  const snap = await getDocs(outgoingRef);
   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
