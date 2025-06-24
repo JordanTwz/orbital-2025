@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TextInput, Button, Text, Alert, StyleSheet } from 'react-native';
 import { getAuth } from 'firebase/auth';
-import { searchUser, sendFriendRequest } from '../firebase';
+import { getUID, searchUserByEmail, sendFriendRequest } from '../firebase';
 
 export default function SearchUsersScreen() {
     const [uid, setUid] = useState('');
@@ -9,12 +9,22 @@ export default function SearchUsersScreen() {
     const currentUser = getAuth().currentUser;
 
     const handleSearch = async () => {
-        const result = await searchUser(uid.trim());
-        if (result && result.id !== currentUser?.uid) {
-            setFoundUserId(result.id);
-        } else {
-            setFoundUserId(null);
-            Alert.alert(result?.id === currentUser?.uid ? 'You cannot add yourself' : 'User not found');
+        try {
+            console.log("Searching for:", uid);
+            const result = await searchUserByEmail(uid.trim());
+            console.log("Search result:", result);
+
+            if (result && result.id !== currentUser?.uid) {
+                setFoundUserId(result.id);
+            } else {
+                setFoundUserId(null);
+                Alert.alert(
+                    result?.id === currentUser?.uid ? 'You cannot add yourself' : 'User not found'
+                );
+            }
+        } catch (error) {
+            console.error("Error searching for user:", error);
+            Alert.alert("Error searching for user.");
         }
     };
 
@@ -28,9 +38,10 @@ export default function SearchUsersScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Add Friend by UID</Text>
+            <Text style={styles.title}>Add Friend by email</Text>
+            <Text style={styles.subtitle}>Your UID: { getUID() ?? 'Loading...'}</Text>
             <TextInput
-                placeholder="Enter user UID"
+                placeholder="Enter user email"
                 value={uid}
                 onChangeText={setUid}
                 style={styles.input}

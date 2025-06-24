@@ -19,7 +19,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
-  getDoc
+  where
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -37,8 +37,16 @@ const db   = getFirestore(app);
 
 // Authentication
 
-export function register(email: string, password: string) {
-  return createUserWithEmailAndPassword(auth, email, password);
+export async function register(email: string, password: string) {
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  const userRef = userCredential.user;
+
+  await setDoc(doc(db, 'users', userRef.uid), {
+    email: userRef.email,
+    createdAt: Date.now(),
+  });
+
+  return userRef;
 }
 
 export function login(email: string, password: string) {
@@ -108,6 +116,13 @@ export async function deleteMealLog(uid: string, id: string) {
 
 // — Friend-request helpers —
 
+
+/**
+ * Get UID of User
+ */
+export function getUID() {
+  return getAuth().currentUser?.uid;
+}
 /**
  * Send a friend request from uid → friendUid
  */
@@ -210,11 +225,15 @@ export async function getOutgoingRequests(uid: string) {
 /**
  * Look up user by UID
  */
-export async function searchUser(uid: string) {
-  const userDoc = await getDoc(doc(db, 'users', uid));
-  if(userDoc.exists()) {
-    return  { id: userDoc.id, ...userDoc.data() };
-  } else {
-    return null;
+export async function searchUserByEmail(email: string) {
+  const usersRef = collection(db, 'users');
+  const q = query(usersRef, where('email', '==', email.trim().toLowerCase()));
+  const snapshot = await getDocs(q);
+
+  if (!snapshot.empty) {
+    const doc = snapshot.docs[0];
+    return { id: doc.id, ...doc.data() };
   }
+
+  return null;
 }
