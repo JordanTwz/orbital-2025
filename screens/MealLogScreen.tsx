@@ -36,7 +36,7 @@ type Analysis = {
 
 // IMPORTANT: replace with your IPv4 address
 // Can we explore using ngrok or a similar service for easier testing?
-const SERVER = 'http://192.168.1.1:3000'
+const SERVER = 'http://192.168.0.63:3000'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MealLog'>;
 
