@@ -35,16 +35,17 @@ interface MealLog {
 export default function TrendsScreen() {
   const [logs, setLogs] = useState<MealLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mealsToShow, setMealsToShow] = useState<string>('All');
+  const [mealsToShow, setMealsToShow] = useState<string>('3');
 
   useEffect(() => {
     (async () => {
       const uid = getAuth().currentUser?.uid;
       if (!uid) return;
       const data = (await getMealLogs(uid)) as MealLog[];
-      setLogs(data.slice().sort((a, b) => a.timestamp - b.timestamp));
+      const sorted = data.slice().sort((a, b) => a.timestamp - b.timestamp);
+      setLogs(sorted);
       setLoading(false);
-      setMealsToShow(data.length.toString());
+      setMealsToShow(Math.min(3, sorted.length).toString());
     })();
   }, []);
 
@@ -56,7 +57,6 @@ export default function TrendsScreen() {
     );
   }
 
-  // Guard: if no logs, show a friendly message
   if (logs.length === 0) {
     return (
       <SafeAreaView style={styles.screen}>
@@ -69,21 +69,17 @@ export default function TrendsScreen() {
     );
   }
 
-  // Determine displayed logs
   const count = parseInt(mealsToShow, 10);
   const validCount =
     isNaN(count) || count <= 0 ? logs.length : Math.min(count, logs.length);
   const displayLogs = logs.slice(-validCount);
 
-  // 1) Calories per meal
   const calorieData = displayLogs.map((l) => l.totalCalories);
   const labels = displayLogs.map((_, i) => `#${i + 1}`);
 
-  // 2) Dishes per meal
   const dishCount = displayLogs.map((l) => l.dishes.length);
   const maxDishCount = Math.max(...dishCount, 1);
 
-  // 3) Macro totals across displayed meals (for pie chart)
   const macroTotals = displayLogs.reduce(
     (t, l) => {
       l.dishes.forEach((d) => {
@@ -96,14 +92,12 @@ export default function TrendsScreen() {
     { carbs: 0, proteins: 0, fats: 0 }
   );
 
-  // 4) Macro breakdown per meal (for stacked bar)
   const stackedData = displayLogs.map((l) => [
     l.dishes.reduce((s, d) => s + d.macros.carbs, 0),
     l.dishes.reduce((s, d) => s + d.macros.proteins, 0),
     l.dishes.reduce((s, d) => s + d.macros.fats, 0),
   ]);
 
-  // Pie chart data
   const pieData = [
     {
       name: 'Carbs',
