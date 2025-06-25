@@ -1,14 +1,15 @@
 // screens/HomeScreen.tsx
+
 import React from 'react';
 import {
   SafeAreaView,
   View,
   Text,
   TouchableOpacity,
-  StyleSheet
+  StyleSheet,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../App';
+import { RootStackParamList } from '../App';
 import { AppTheme } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
@@ -17,10 +18,9 @@ export default function HomeScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.container}>
-
         <Text style={styles.title}>MealCraft</Text>
 
-        {/* Primary action */}
+        {/* Log a Meal */}
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() => navigation.navigate('MealLog')}
@@ -28,7 +28,7 @@ export default function HomeScreen({ navigation }: Props) {
           <Text style={styles.primaryButtonText}>Log a Meal</Text>
         </TouchableOpacity>
 
-        {/* Meal Insights Section */}
+        {/* Meal Insights */}
         <Text style={styles.sectionHeader}>Meal Insights</Text>
         <View style={styles.gridRow}>
           <TouchableOpacity
@@ -45,18 +45,20 @@ export default function HomeScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
 
-        {/* Community Section */}
-        <Text style={[styles.sectionHeader, styles.socialHeader]}>Community</Text>
+        {/* Community */}
+        <Text style={[styles.sectionHeader, styles.socialHeader]}>
+          Community
+        </Text>
         <View style={styles.gridRow}>
           <TouchableOpacity
             style={styles.gridButton}
-            onPress={() => navigation.navigate('FriendsList')}
+            onPress={() => navigation.navigate('Friends')}
           >
             <Text style={styles.gridButtonText}>Friends</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.gridButton}
-            onPress={() => navigation.navigate('FriendRequests')}
+            onPress={() => navigation.navigate('Friends')}
           >
             <Text style={styles.gridButtonText}>Requests</Text>
           </TouchableOpacity>
@@ -67,7 +69,6 @@ export default function HomeScreen({ navigation }: Props) {
         >
           <Text style={styles.tertiaryButtonText}>Add Friend</Text>
         </TouchableOpacity>
-
       </View>
     </SafeAreaView>
   );

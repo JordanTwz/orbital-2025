@@ -1,18 +1,15 @@
 // App.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   ActivityIndicator,
-  View,
+  TouchableOpacity,
   Text,
-  TouchableOpacity
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import {
-  subscribeToAuthChanges,
-  logout
-} from './firebase';
+import { subscribeToAuthChanges, logout } from './firebase';
 
 import SignInScreen from './screens/SignInScreen';
 import SignUpScreen from './screens/SignUpScreen';
@@ -23,14 +20,11 @@ import MealDetailScreen from './screens/MealDetailScreen';
 import EditMealScreen from './screens/EditMealScreen';
 import TrendsScreen from './screens/TrendsScreen';
 
-// ← Newly added imports
-import FriendsListScreen from './screens/FriendsListScreen';
-import FriendRequestsScreen from './screens/FriendRequestsScreen';
+import FriendsScreen from './screens/friends/FriendsScreen';
 import SearchUsersScreen from './screens/SearchUsersScreen';
 
 import { AppTheme } from './theme';
 
-// ← Extend your navigation params
 export type RootStackParamList = {
   SignIn: undefined;
   SignUp: undefined;
@@ -40,10 +34,7 @@ export type RootStackParamList = {
   MealDetail: { log: any };
   EditMeal: { log: any };
   Trends: undefined;
-
-  // ← New entries
-  FriendsList: undefined;
-  FriendRequests: undefined;
+  Friends: undefined;
   SearchUsers: undefined;
 };
 
@@ -63,9 +54,13 @@ export default function App() {
   if (!initialRoute) {
     return (
       <SafeAreaView
-        style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
       >
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={AppTheme.colors.primary} />
       </SafeAreaView>
     );
   }
@@ -104,9 +99,7 @@ export default function App() {
                 }}
                 style={{ marginRight: 16 }}
               >
-                <Text style={{ color: '#ffffff', fontSize: 16 }}>
-                  Logout
-                </Text>
+                <Text style={{ color: '#fff', fontSize: 16 }}>Logout</Text>
               </TouchableOpacity>
             ),
           })}
@@ -138,17 +131,12 @@ export default function App() {
           options={{ title: 'Eating Trends' }}
         />
 
-        {/* ← New friend-related screens */}
         <Stack.Screen
-          name="FriendsList"
-          component={FriendsListScreen}
-          options={{ title: 'Your Friends' }}
+          name="Friends"
+          component={FriendsScreen}
+          options={{ title: 'Community' }}
         />
-        <Stack.Screen
-          name="FriendRequests"
-          component={FriendRequestsScreen}
-          options={{ title: 'Friend Requests' }}
-        />
+
         <Stack.Screen
           name="SearchUsers"
           component={SearchUsersScreen}

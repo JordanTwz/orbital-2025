@@ -1,3 +1,5 @@
+// screen/MealDetailScreen.tsx
+
 import React from 'react';
 import {
   SafeAreaView,
