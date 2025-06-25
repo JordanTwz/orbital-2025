@@ -1,4 +1,5 @@
 // screens/MealLogScreen.tsx
+
 import React, { useState } from 'react';
 import {
   SafeAreaView,
@@ -34,9 +35,7 @@ type Analysis = {
   dishes: Dish[];
 };
 
-// IMPORTANT: replace with your IPv4 address
-// Can we explore using ngrok or a similar service for easier testing?
-const SERVER = 'http://192.168.0.63:3000'
+const SERVER = 'http://192.168.0.65:3000';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MealLog'>;
 
@@ -46,6 +45,7 @@ export default function MealLogScreen({}: Props) {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
+  // Pick from gallery
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -63,6 +63,25 @@ export default function MealLogScreen({}: Props) {
     }
   };
 
+  // Take a new photo
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission denied', 'We need access to your camera.');
+      return;
+    }
+    const picker = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
+    if (!picker.canceled) {
+      setImageUri(picker.assets[0].uri);
+      setAnalysis(null);
+      setExpandedIndex(null);
+    }
+  };
+
+  // Send to server & save
   const analyzeImage = async () => {
     if (!imageUri) return;
     setLoading(true);
@@ -71,32 +90,26 @@ export default function MealLogScreen({}: Props) {
       const fileName = uriParts.pop() || 'photo.jpg';
       const match = /\.(\w+)$/.exec(fileName);
       const fileType = match ? `image/${match[1]}` : 'image';
-
       const formData = new FormData();
-      formData.append(
-        'photo',
-        {
-          uri: imageUri,
-          name: fileName,
-          type: fileType,
-        } as any
-      );
+      formData.append('photo', {
+        uri: imageUri,
+        name: fileName,
+        type: fileType,
+      } as any);
 
       const resp = await fetch(`${SERVER}/analyze`, {
         method: 'POST',
         body: formData,
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-
       if (!resp.ok) {
         const err = await resp.json();
         throw new Error(err.error || 'Server error');
       }
-
       const json = (await resp.json()) as Analysis;
       setAnalysis(json);
 
-      // — Save to Firestore —
+      // Save to Firestore
       const uid = getAuth().currentUser?.uid;
       if (uid) {
         await addMealLog(uid, {
@@ -119,26 +132,43 @@ export default function MealLogScreen({}: Props) {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Log a Meal</Text>
 
-        <TouchableOpacity style={styles.photoBox} onPress={pickImage}>
+        {/* Photo preview */}
+        <View style={styles.photoBox}>
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.photo} />
           ) : (
-            <Text style={styles.photoPlaceholder}>Tap to add a photo</Text>
+            <Text style={styles.photoPlaceholder}>No photo selected</Text>
           )}
-        </TouchableOpacity>
+        </View>
 
+        {/* Pick / Take buttons */}
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={styles.actionButton} onPress={pickImage}>
+            <Text style={styles.actionText}>Pick from Gallery</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} onPress={takePhoto}>
+            <Text style={styles.actionText}>Take Photo</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Analyze Meal */}
         {imageUri && (
-          <TouchableOpacity style={styles.actionButton} onPress={analyzeImage}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.analyzeButton]}
+            onPress={analyzeImage}
+          >
             <Text style={styles.actionText}>Analyze Meal</Text>
           </TouchableOpacity>
         )}
 
+        {/* Loading overlay */}
         {loading && (
           <View style={styles.overlay}>
             <ActivityIndicator size="large" color={AppTheme.colors.primary} />
           </View>
         )}
 
+        {/* Analysis results */}
         {analysis && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Analysis</Text>
@@ -211,15 +241,27 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: AppTheme.spacing.md,
+  },
   actionButton: {
+    flex: 1,
     backgroundColor: AppTheme.colors.primary,
     paddingVertical: AppTheme.spacing.sm * 1.5,
-    paddingHorizontal: AppTheme.spacing.lg,
+    marginHorizontal: AppTheme.spacing.xs,
     borderRadius: AppTheme.roundness,
     alignItems: 'center',
-    marginBottom: AppTheme.spacing.md,
     elevation: 2,
   },
+  analyzeButton: {
+    width: '100%',
+    marginVertical: AppTheme.spacing.md,   
+    elevation: 4,                        
+  },
+
   actionText: {
     color: '#fff',
     fontSize: AppTheme.typography.body,
