@@ -1,4 +1,5 @@
 // screens/MealHistoryScreen.tsx
+
 import React, { useState, useCallback } from 'react';
 import {
   SafeAreaView,
@@ -8,9 +9,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  Alert
+  Alert,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getAuth } from 'firebase/auth';
 import { getMealLogs, deleteMealLog } from '../firebase';
@@ -61,7 +62,6 @@ export default function MealHistoryScreen({ navigation }: Props) {
     if (!uid) return;
     try {
       await deleteMealLog(uid, id);
-      // update local state immediately
       setLogs(current => current.filter(log => log.id !== id));
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to delete meal');
@@ -73,6 +73,19 @@ export default function MealHistoryScreen({ navigation }: Props) {
       <View style={styles.center}>
         <ActivityIndicator size="large" color={AppTheme.colors.primary} />
       </View>
+    );
+  }
+
+  // Guard: if no logs, show a friendly message
+  if (logs.length === 0) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.center}>
+          <Text style={styles.noDataText}>
+            No meal history yet. Log a meal to get started!
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -157,5 +170,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  noDataText: {
+    fontSize: AppTheme.typography.body,
+    color: AppTheme.colors.text,
+    textAlign: 'center',
   },
 });

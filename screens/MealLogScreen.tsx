@@ -35,7 +35,7 @@ type Analysis = {
   dishes: Dish[];
 };
 
-const SERVER = 'http://192.168.0.65:3000';
+const SERVER = 'http://192.168.XX.XX:3000';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MealLog'>;
 
@@ -81,7 +81,7 @@ export default function MealLogScreen({}: Props) {
     }
   };
 
-  // Send to server & save
+  // Send to server and save
   const analyzeImage = async () => {
     if (!imageUri) return;
     setLoading(true);

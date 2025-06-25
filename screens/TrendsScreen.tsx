@@ -1,4 +1,5 @@
 // screens/TrendsScreen.tsx
+
 import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
@@ -8,13 +9,13 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  TextInput
+  TextInput,
 } from 'react-native';
 import {
   LineChart,
   BarChart,
   PieChart,
-  StackedBarChart
+  StackedBarChart,
 } from 'react-native-chart-kit';
 import { getAuth } from 'firebase/auth';
 import { getMealLogs } from '../firebase';
@@ -55,23 +56,37 @@ export default function TrendsScreen() {
     );
   }
 
+  // Guard: if no logs, show a friendly message
+  if (logs.length === 0) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.center}>
+          <Text style={styles.noDataText}>
+            No meal data yet. Log a meal to see your trends!
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // Determine displayed logs
   const count = parseInt(mealsToShow, 10);
-  const validCount = isNaN(count) || count <= 0 ? logs.length : Math.min(count, logs.length);
+  const validCount =
+    isNaN(count) || count <= 0 ? logs.length : Math.min(count, logs.length);
   const displayLogs = logs.slice(-validCount);
 
   // 1) Calories per meal
-  const calorieData = displayLogs.map(l => l.totalCalories);
+  const calorieData = displayLogs.map((l) => l.totalCalories);
   const labels = displayLogs.map((_, i) => `#${i + 1}`);
 
   // 2) Dishes per meal
-  const dishCount = displayLogs.map(l => l.dishes.length);
+  const dishCount = displayLogs.map((l) => l.dishes.length);
   const maxDishCount = Math.max(...dishCount, 1);
 
   // 3) Macro totals across displayed meals (for pie chart)
   const macroTotals = displayLogs.reduce(
     (t, l) => {
-      l.dishes.forEach(d => {
+      l.dishes.forEach((d) => {
         t.carbs += d.macros.carbs;
         t.proteins += d.macros.proteins;
         t.fats += d.macros.fats;
@@ -82,10 +97,10 @@ export default function TrendsScreen() {
   );
 
   // 4) Macro breakdown per meal (for stacked bar)
-  const stackedData = displayLogs.map(l => [
+  const stackedData = displayLogs.map((l) => [
     l.dishes.reduce((s, d) => s + d.macros.carbs, 0),
     l.dishes.reduce((s, d) => s + d.macros.proteins, 0),
-    l.dishes.reduce((s, d) => s + d.macros.fats, 0)
+    l.dishes.reduce((s, d) => s + d.macros.fats, 0),
   ]);
 
   // Pie chart data
@@ -95,32 +110,32 @@ export default function TrendsScreen() {
       population: macroTotals.carbs,
       color: AppTheme.colors.primary,
       legendFontColor: AppTheme.colors.text,
-      legendFontSize: 12
+      legendFontSize: 12,
     },
     {
       name: 'Proteins',
       population: macroTotals.proteins,
       color: AppTheme.colors.notification,
       legendFontColor: AppTheme.colors.text,
-      legendFontSize: 12
+      legendFontSize: 12,
     },
     {
       name: 'Fats',
       population: macroTotals.fats,
       color: AppTheme.colors.border,
       legendFontColor: AppTheme.colors.text,
-      legendFontSize: 12
-    }
+      legendFontSize: 12,
+    },
   ];
 
   const screenWidth = Dimensions.get('window').width - AppTheme.spacing.md * 2;
   const chartConfig = {
     backgroundGradientFrom: AppTheme.colors.background,
-    backgroundGradientTo:   AppTheme.colors.background,
-    decimalPlaces:          0,
-    color:                  (opacity: number = 1): string => AppTheme.colors.primary,
-    labelColor:             (opacity: number = 1): string => AppTheme.colors.text,
-    propsForDots:           { r: '4', strokeWidth: '2', stroke: AppTheme.colors.primary }
+    backgroundGradientTo: AppTheme.colors.background,
+    decimalPlaces: 0,
+    color: (opacity: number = 1): string => AppTheme.colors.primary,
+    labelColor: (opacity: number = 1): string => AppTheme.colors.text,
+    propsForDots: { r: '4', strokeWidth: '2', stroke: AppTheme.colors.primary },
   };
 
   return (
@@ -190,8 +205,8 @@ export default function TrendsScreen() {
             barColors: [
               AppTheme.colors.primary,
               AppTheme.colors.notification,
-              AppTheme.colors.border
-            ]
+              AppTheme.colors.border,
+            ],
           }}
           width={screenWidth}
           height={180}
@@ -207,20 +222,30 @@ export default function TrendsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: AppTheme.colors.background
+    backgroundColor: AppTheme.colors.background,
   },
   container: {
     padding: AppTheme.spacing.md,
-    alignItems: 'center'
+    alignItems: 'center',
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noDataText: {
+    fontSize: AppTheme.typography.body,
+    color: AppTheme.colors.text,
+    textAlign: 'center',
   },
   selectorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: AppTheme.spacing.lg
+    marginBottom: AppTheme.spacing.lg,
   },
   selectorLabel: {
     fontSize: AppTheme.typography.body,
-    color: AppTheme.colors.text
+    color: AppTheme.colors.text,
   },
   selectorInput: {
     width: 60,
@@ -231,22 +256,17 @@ const styles = StyleSheet.create({
     borderRadius: AppTheme.roundness,
     textAlign: 'center',
     fontSize: AppTheme.typography.body,
-    backgroundColor: AppTheme.colors.card
+    backgroundColor: AppTheme.colors.card,
   },
   title: {
     fontSize: AppTheme.typography.h3,
     fontWeight: 'bold',
     color: AppTheme.colors.text,
     marginTop: AppTheme.spacing.lg,
-    marginBottom: AppTheme.spacing.sm
+    marginBottom: AppTheme.spacing.sm,
   },
   chart: {
     borderRadius: AppTheme.roundness,
-    marginBottom: AppTheme.spacing.lg
+    marginBottom: AppTheme.spacing.lg,
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  }
 });
