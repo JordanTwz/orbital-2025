@@ -58,17 +58,11 @@ export default function HomeScreen({ navigation }: Props) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.gridButton}
-            onPress={() => navigation.navigate('Friends')}
+            onPress={() => navigation.navigate('SearchUsers')}
           >
-            <Text style={styles.gridButtonText}>Requests</Text>
+            <Text style={styles.gridButtonText}>Add Friend</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.tertiaryButton}
-          onPress={() => navigation.navigate('SearchUsers')}
-        >
-          <Text style={styles.tertiaryButtonText}>Add Friend</Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -130,22 +124,6 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   gridButtonText: {
-    color: AppTheme.colors.primary,
-    fontSize: AppTheme.typography.body,
-    fontWeight: '600',
-  },
-  tertiaryButton: {
-    width: '100%',
-    backgroundColor: AppTheme.colors.card,
-    borderWidth: 1,
-    borderColor: AppTheme.colors.primary,
-    paddingVertical: AppTheme.spacing.sm * 1.5,
-    borderRadius: AppTheme.roundness,
-    alignItems: 'center',
-    marginTop: AppTheme.spacing.md,
-    elevation: 1,
-  },
-  tertiaryButtonText: {
     color: AppTheme.colors.primary,
     fontSize: AppTheme.typography.body,
     fontWeight: '600',
