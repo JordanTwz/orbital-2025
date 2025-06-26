@@ -1,24 +1,23 @@
 // screens/SearchUsersScreen.tsx
+
 import React, { useState } from 'react';
 import {
+  SafeAreaView,
   View,
   TextInput,
-  Button,
   Text,
-  Alert,
   StyleSheet,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { getAuth } from 'firebase/auth';
-import {
-  searchUserByEmail,
-  sendFriendRequest,
-} from '../firebase';
+import { searchUserByEmail, sendFriendRequest } from '../firebase';
 import { AppTheme } from '../theme';
+import { Card } from '../components/Card';
 
 export default function SearchUsersScreen() {
-  const [email, setEmail]           = useState('');
-  const [foundEmail, setFoundEmail] = useState<string | null>(null);
-  const [foundUid, setFoundUid]     = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [found, setFound] = useState<{ id: string; email: string } | null>(null);
   const currentUser = getAuth().currentUser;
 
   const handleSearch = async () => {
@@ -26,11 +25,9 @@ export default function SearchUsersScreen() {
       const normalized = email.trim().toLowerCase();
       const result = await searchUserByEmail(normalized);
       if (result && result.id !== currentUser?.uid) {
-        setFoundUid(result.id);
-        setFoundEmail(result.email);
+        setFound(result as any);
       } else {
-        setFoundUid(null);
-        setFoundEmail(null);
+        setFound(null);
         Alert.alert(
           result?.id === currentUser?.uid
             ? 'You cannot add yourself'
@@ -38,91 +35,109 @@ export default function SearchUsersScreen() {
         );
       }
     } catch (err: any) {
-      console.error('searchUserByEmail error:', err);
-      Alert.alert('Error searching', err.message || 'Unknown error');
+      console.error(err);
+      Alert.alert('Search error', err.message || 'Something went wrong');
     }
   };
 
   const handleSendRequest = async () => {
-    if (!currentUser || !foundUid) return;
-    console.log(
-      `Sending friend request from ${currentUser.uid} → ${foundUid}`
-    );
+    if (!found || !currentUser) return;
     try {
-      await sendFriendRequest(currentUser.uid, foundUid);
-      Alert.alert(
-        'Success',
-        `Request sent to ${foundEmail}`,
-        [{ text: 'OK', onPress: () => {
-            setEmail('');
-            setFoundUid(null);
-            setFoundEmail(null);
-          }
-        }]
-      );
+      await sendFriendRequest(currentUser.uid, found.id);
+      Alert.alert('Success', `Friend request sent to ${found.email}`);
+      setEmail('');
+      setFound(null);
     } catch (err: any) {
-      console.error('sendFriendRequest error:', err);
-      Alert.alert(
-        'Failed to send request',
-        err.message || 'Unknown error'
-      );
+      console.error(err);
+      Alert.alert('Error', err.message || 'Failed to send request');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Add Friend by Email</Text>
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Add Friend</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter user email"
-        placeholderTextColor={AppTheme.colors.border}
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <Button title="Search" onPress={handleSearch} />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter user email"
+          placeholderTextColor={AppTheme.colors.border}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
 
-      {foundEmail && (
-        <View style={styles.resultContainer}>
-          <Text style={styles.result}>Found: {foundEmail}</Text>
-          <Button
-            title="Send Friend Request"
-            onPress={handleSendRequest}
-          />
-        </View>
-      )}
-    </View>
+        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+          <Text style={styles.searchButtonText}>Search</Text>
+        </TouchableOpacity>
+
+        {found && (
+          <Card>
+            <Text style={styles.foundText}>Found: {found.email}</Text>
+            <TouchableOpacity
+              style={styles.requestButton}
+              onPress={handleSendRequest}
+            >
+              <Text style={styles.requestButtonText}>Send Request</Text>
+            </TouchableOpacity>
+          </Card>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: AppTheme.colors.background,
+  screen: {
     flex: 1,
+    backgroundColor: AppTheme.colors.background,
+  },
+  container: {
+    padding: AppTheme.spacing.md,
   },
   title: {
-    fontSize: 20,
-    marginBottom: 12,
-    color: AppTheme.colors.text,
+    fontSize: AppTheme.typography.h2,
     fontWeight: '600',
+    color: AppTheme.colors.primary,
+    marginBottom: AppTheme.spacing.lg,
   },
   input: {
-    borderBottomWidth: 1,
+    backgroundColor: AppTheme.colors.card,
     borderColor: AppTheme.colors.border,
-    marginBottom: 20,
-    fontSize: 16,
+    borderWidth: 1,
+    borderRadius: AppTheme.roundness,
+    padding: AppTheme.spacing.sm,
+    fontSize: AppTheme.typography.body,
     color: AppTheme.colors.text,
-    paddingVertical: 8,
+    marginBottom: AppTheme.spacing.md,
   },
-  resultContainer: {
-    marginTop: 20,
+  searchButton: {
+    backgroundColor: AppTheme.colors.primary,
+    paddingVertical: AppTheme.spacing.sm * 1.5,
+    borderRadius: AppTheme.roundness,
+    alignItems: 'center',
+    marginBottom: AppTheme.spacing.lg,
   },
-  result: {
-    fontSize: 16,
-    marginBottom: 8,
+  searchButtonText: {
+    color: '#fff',
+    fontSize: AppTheme.typography.body,
+    fontWeight: '600',
+  },
+  foundText: {
+    fontSize: AppTheme.typography.body,
+    marginBottom: AppTheme.spacing.sm,
     color: AppTheme.colors.text,
+  },
+  requestButton: {
+    backgroundColor: AppTheme.colors.primary,
+    paddingVertical: AppTheme.spacing.sm,
+    borderRadius: AppTheme.roundness / 2,
+    alignItems: 'center',
+  },
+  requestButtonText: {
+    color: '#fff',
+    fontSize: AppTheme.typography.body,
+    fontWeight: '600',
   },
 });
