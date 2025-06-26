@@ -1,22 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Button,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { doc, getDoc } from 'firebase/firestore';
 import { useFriends, Request } from '../../hooks/useFriends';
 import { db } from '../../firebase';
 import { AppTheme } from '../../theme';
+import { Card } from '../../components/Card';
 
 export default function OutgoingRequestsScreen() {
   const { outgoing, loading, error, cancel } = useFriends();
   const [names, setNames] = useState<Record<string,string>>({});
 
-  // Load each recipient's email/displayName once
   useEffect(() => {
     outgoing.forEach(req => {
       if (!names[req.to]) {
@@ -25,7 +18,7 @@ export default function OutgoingRequestsScreen() {
             const d = snap.data();
             setNames(n => ({
               ...n,
-              [req.to]: d?.displayName ?? d?.email ?? 'Unknown User'
+              [req.to]: d?.displayName ?? d?.email ?? 'Unknown'
             }));
           })
           .catch(console.error);
@@ -40,7 +33,6 @@ export default function OutgoingRequestsScreen() {
       </View>
     );
   }
-
   if (error) {
     return (
       <View style={styles.center}>
@@ -51,45 +43,36 @@ export default function OutgoingRequestsScreen() {
 
   return (
     <FlatList
-      contentContainerStyle={outgoing.length ? undefined : styles.center}
       data={outgoing}
+      contentContainerStyle={outgoing.length ? undefined : styles.center}
       keyExtractor={item => item.id}
-      ListEmptyComponent={<Text>No pending requests.</Text>}
+      ListEmptyComponent={<Text style={styles.emptyText}>No pending requests.</Text>}
       renderItem={({ item }: { item: Request }) => (
-        <View style={styles.card}>
-          <Text style={styles.toText}>
-            To: {names[item.to] ?? 'Loading…'}
-          </Text>
-          <Button title="Cancel" onPress={() => cancel(item.to)} />
-        </View>
+        <Card>
+          <View style={styles.row}>
+            <Text style={styles.toText}>To: {names[item.to] ?? 'Loading…'}</Text>
+            <TouchableOpacity style={styles.cancelButton} onPress={() => cancel(item.to)}>
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Card>
       )}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  center: {
-    flex:           1,
-    justifyContent: 'center',
-    alignItems:     'center',
-    padding:        20,
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  emptyText: { color: AppTheme.colors.text },
+  errorText: { color: AppTheme.colors.notification },
+  row: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
-  card: {
-    flexDirection:    'row',
-    justifyContent:   'space-between',
-    alignItems:       'center',
-    padding:          16,
-    marginHorizontal: 16,
-    marginVertical:   8,
-    backgroundColor:  AppTheme.colors.card,
-    borderRadius:     AppTheme.roundness,
-    elevation:        1,
+  toText: { fontSize: 16, color: AppTheme.colors.text },
+  cancelButton: {
+    backgroundColor: AppTheme.colors.notification,
+    paddingVertical: 6, paddingHorizontal: 16,
+    borderRadius: AppTheme.roundness / 2,
   },
-  toText: {
-    fontSize: 16,
-    color:    AppTheme.colors.text,
-  },
-  errorText: {
-    color: AppTheme.colors.notification,
-  },
+  buttonText: { color: '#fff', fontWeight: '600' },
 });

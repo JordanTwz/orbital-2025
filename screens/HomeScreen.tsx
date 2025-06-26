@@ -4,21 +4,31 @@ import React from 'react';
 import {
   SafeAreaView,
   View,
-  Text,
+  Image,
   TouchableOpacity,
+  Text,
   StyleSheet,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import { AppTheme } from '../theme';
+import { useFriends } from '../hooks/useFriends';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
+  const { incoming } = useFriends();
+  const badgeCount = incoming.length;
+
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.container}>
-        <Text style={styles.title}>MealCraft</Text>
+        {/* Logo */}
+        <Image
+          source={require('../assets/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
 
         {/* Log a Meal */}
         <TouchableOpacity
@@ -55,7 +65,15 @@ export default function HomeScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('Friends')}
           >
             <Text style={styles.gridButtonText}>Friends</Text>
+            {badgeCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {badgeCount > 9 ? '9+' : badgeCount}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.gridButton}
             onPress={() => navigation.navigate('SearchUsers')}
@@ -78,11 +96,10 @@ const styles = StyleSheet.create({
     padding: AppTheme.spacing.md,
     justifyContent: 'center',
   },
-  title: {
-    fontSize: AppTheme.typography.h2,
-    fontWeight: 'bold',
-    color: AppTheme.colors.primary,
-    textAlign: 'center',
+  logo: {
+    width: 250,
+    height: 250,
+    alignSelf: 'center',
     marginBottom: AppTheme.spacing.lg,
   },
   primaryButton: {
@@ -122,10 +139,28 @@ const styles = StyleSheet.create({
     borderRadius: AppTheme.roundness,
     alignItems: 'center',
     elevation: 1,
+    position: 'relative', // for badge positioning
   },
   gridButtonText: {
     color: AppTheme.colors.primary,
     fontSize: AppTheme.typography.body,
+    fontWeight: '600',
+  },
+  badge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: AppTheme.colors.notification,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 12,
     fontWeight: '600',
   },
 });
