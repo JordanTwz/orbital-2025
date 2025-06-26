@@ -1,4 +1,5 @@
 // firebase.ts
+
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
@@ -35,7 +36,7 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-/** Register a new user and store their email lowercased */
+// Register a new user and store their email lowercased 
 export async function register(email: string, password: string) {
   const normalized = email.trim().toLowerCase();
   const userCred   = await createUserWithEmailAndPassword(auth, normalized, password);
@@ -47,24 +48,24 @@ export async function register(email: string, password: string) {
   return userCred.user;
 }
 
-/** Sign in existing user */
+// Sign in existing user
 export function login(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
 }
 
-/** Sign out current user */
+// Sign out current user */
 export function logout() {
   return signOut(auth);
 }
 
-/** Subscribe to auth state changes */
+// Subscribe to auth state changes 
 export function subscribeToAuthChanges(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
 }
 
-/* -------------------------------------------------------------------------- */
-/*                          Meal-log helpers (unchanged)                      */
-/* -------------------------------------------------------------------------- */
+
+// Meal log helpers
+
 
 export async function addMealLog(uid: string, log: any) {
   const colRef = collection(db, 'users', uid, 'mealLogs');
@@ -85,9 +86,7 @@ export async function deleteMealLog(uid: string, id: string) {
   return deleteDoc(docRef);
 }
 
-/* -------------------------------------------------------------------------- */
-/*                        Friend-request helpers                              */
-/* -------------------------------------------------------------------------- */
+// Friend request helpers
 
 export function getUID() {
   return auth.currentUser?.uid;
@@ -162,5 +161,5 @@ export async function searchUserByEmail(email: string) {
   return null;
 }
 
-// **ADD THIS LINE** so other modules can import your Firestore instance:
+// so other modules can import the Firestore instance
 export { db };
