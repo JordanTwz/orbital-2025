@@ -29,5 +29,5 @@ test('registers a new user and writes to Firestore', async () => {
     const result = await register('Test@Example.com', 'password123');
 
     expect(result.uid).toBe('abc123');
-    expect(mockedSetDoc).toHaveBeenCalled(); // ✅ confirms Firestore was called
+    expect(mockedSetDoc).toHaveBeenCalled(); // confirms Firestore was called
 });
