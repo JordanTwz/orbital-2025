@@ -1,8 +1,8 @@
 ## MealCraft: Starting Guide
 
-Welcome to **MealCraft**! This guide will help you run both the back-end server and the mobile app on your Windows PC and phone. We’ll assume everything ends up in your **Downloads** folder.
+Welcome to **MealCraft**! This guide will help you run both the back-end server and the mobile app on your Windows PC and phone. We'll assume everything ends up in your **Downloads** folder.
 
-> **Tip:** If at any point you see a command prompt error, don’t panic - just follow the troubleshooting tips at the end.
+> **Tip:** If at any point you see a command prompt error, don't panic - just follow the troubleshooting tips at the end.
 
 
 
@@ -90,7 +90,7 @@ Welcome to **MealCraft**! This guide will help you run both the back-end server 
       > If you do not have one, please email jordan_tan@u.nus.edu for a temporary key.
    * Save and close.
 
-4. Find your PC’s local IPv4 address:
+4. Find your PCs local IPv4 address:
 
    ```powershell
    ipconfig
@@ -185,7 +185,7 @@ Welcome to **MealCraft**! This guide will help you run both the back-end server 
 
   * Did you save and restart `node index.js` after editing `.env`?
   * Is `.env` in the `/server` folder with no extra spaces?
-* **Expo errors or won’t load**
+* **Expo errors or won't load**
 
   * Did you run `npm install` in the root?
   * Are you running `npx expo start` from the project root?
