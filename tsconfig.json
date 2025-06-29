@@ -3,7 +3,7 @@
   "compilerOptions": {
     "types": ["jest"],
     "jsx": "react-native",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "baseUrl": ".",
     "paths": {
