@@ -1,3 +1,5 @@
+// screens/friends/OutgoingRequestsScreen.tsx
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import { doc, getDoc } from 'firebase/firestore';

@@ -1,4 +1,7 @@
-// firebase.ts
+/* firebase.ts
+   Firebase initialisation + auth helpers + CRUD + social graph.
+   Updated 17 Jul 2025 – acceptFriend now uses an atomic writeBatch.
+*/
 
 import { initializeApp } from 'firebase/app';
 import {
@@ -7,11 +10,13 @@ import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
-  User
+  User,
 } from 'firebase/auth';
+
 import {
   getFirestore,
   collection,
+  collectionGroup,
   addDoc,
   getDocs,
   query,
@@ -20,140 +25,133 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
-  where
+  where,
+  arrayUnion,
+  arrayRemove,
+  writeBatch,                    // ← NEW: for atomic friend-accept
 } from 'firebase/firestore';
 
+/* ──────────────────────────────
+   1) Firebase App & Firestore
+────────────────────────────────*/
 const firebaseConfig = {
-  apiKey: 'AIzaSyDB0LQru_C36-S07Zfk0D470F1czxJ6XUg',
-  authDomain: 'mealcraft-fdfec.firebaseapp.com',
-  projectId: 'mealcraft-fdfec',
-  storageBucket: 'mealcraft-fdfec.appspot.com',
+  apiKey:            'AIzaSyDB0LQru_C36-S07Zfk0D470F1czxJ6XUg',
+  authDomain:        'mealcraft-fdfec.firebaseapp.com',
+  projectId:         'mealcraft-fdfec',
+  storageBucket:     'mealcraft-fdfec.appspot.com',
   messagingSenderId: '917444169063',
-  appId: '1:917444169063:web:c92ed7364cc7abd71bf3c2',
+  appId:             '1:917444169063:web:c92ed7364cc7abd71bf3c2',
 };
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-// Register a new user and store their email lowercased 
+/* ──────────────────────────────
+   2) Auth helpers
+────────────────────────────────*/
 export async function register(email: string, password: string) {
   const normalized = email.trim().toLowerCase();
-  const userCred   = await createUserWithEmailAndPassword(auth, normalized, password);
-  const uid        = userCred.user.uid;
+  const cred       = await createUserWithEmailAndPassword(auth, normalized, password);
+  const uid        = cred.user.uid;
+
   await setDoc(doc(db, 'users', uid), {
     email: normalized,
     createdAt: Date.now(),
   });
-  return userCred.user;
+  return cred.user;
 }
 
-// Sign in existing user
 export function login(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
 }
 
-// Sign out current user */
 export function logout() {
   return signOut(auth);
 }
 
-// Subscribe to auth state changes 
-export function subscribeToAuthChanges(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, callback);
+export function subscribeToAuthChanges(cb: (user: User | null) => void) {
+  return onAuthStateChanged(auth, cb);
 }
 
-
-// Meal log helpers
-
-
+/* ──────────────────────────────
+   3) Meal-log CRUD + likes / privacy
+────────────────────────────────*/
 export async function addMealLog(uid: string, log: any) {
-  const colRef = collection(db, 'users', uid, 'mealLogs');
-  return addDoc(colRef, log);
+  const ref = collection(db, 'users', uid, 'mealLogs');
+  return addDoc(ref, {
+    ...log,
+    ownerUid: uid,
+    isPublic: false,
+    likes: [] as string[],
+  });
 }
+
 export async function getMealLogs(uid: string) {
-  const colRef = collection(db, 'users', uid, 'mealLogs');
-  const q      = query(colRef, orderBy('timestamp', 'desc'));
-  const snap   = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+  const ref  = collection(db, 'users', uid, 'mealLogs');
+  const q    = query(ref, orderBy('timestamp', 'desc'));
+  const snap = await getDocs(q);
+
+  return snap.docs.map((d) => ({
+    id: d.id,
+    ownerUid: uid,
+    ...(d.data() as any),
+  }));
 }
+
 export async function updateMealLog(uid: string, id: string, updates: any) {
-  const docRef = doc(db, 'users', uid, 'mealLogs', id);
-  return updateDoc(docRef, updates);
+  return updateDoc(doc(db, 'users', uid, 'mealLogs', id), updates);
 }
+
 export async function deleteMealLog(uid: string, id: string) {
-  const docRef = doc(db, 'users', uid, 'mealLogs', id);
-  return deleteDoc(docRef);
+  return deleteDoc(doc(db, 'users', uid, 'mealLogs', id));
 }
 
-// Friend request helpers
-
-export function getUID() {
-  return auth.currentUser?.uid;
+export async function setMealPrivacy(ownerUid: string, id: string, isPublic: boolean) {
+  return updateDoc(doc(db, 'users', ownerUid, 'mealLogs', id), { isPublic });
 }
 
-export async function sendFriendRequest(uid: string, friendUid: string) {
-  const outgoingRef = doc(db, 'users', uid, 'outgoingRequests', friendUid);
-  const incomingRef = doc(db, 'users', friendUid, 'incomingRequests', uid);
-  const requestData = { from: uid, to: friendUid, status: 'pending', timestamp: Date.now() };
-  await setDoc(outgoingRef, requestData);
-  await setDoc(incomingRef, requestData);
+export async function likeMealLog(ownerUid: string, id: string, likerUid: string) {
+  return updateDoc(doc(db, 'users', ownerUid, 'mealLogs', id), {
+    likes: arrayUnion(likerUid),
+  });
 }
 
-export async function acceptFriend(uid: string, friendUid: string) {
-  const incomingRef   = doc(db, 'users', uid, 'incomingRequests', friendUid);
-  const outgoingRef   = doc(db, 'users', friendUid, 'outgoingRequests', uid);
-  const myFriendRef    = doc(db, 'users', uid, 'friends', friendUid);
-  const theirFriendRef = doc(db, 'users', friendUid, 'friends', uid);
-  await setDoc(myFriendRef,    { since: Date.now() });
-  await setDoc(theirFriendRef, { since: Date.now() });
-  await deleteDoc(incomingRef);
-  await deleteDoc(outgoingRef);
+export async function unlikeMealLog(ownerUid: string, id: string, likerUid: string) {
+  return updateDoc(doc(db, 'users', ownerUid, 'mealLogs', id), {
+    likes: arrayRemove(likerUid),
+  });
 }
 
-export async function rejectFriend(uid: string, friendUid: string) {
-  const incomingRef = doc(db, 'users', uid, 'incomingRequests', friendUid);
-  const outgoingRef = doc(db, 'users', friendUid, 'outgoingRequests', uid);
-  await deleteDoc(incomingRef);
-  await deleteDoc(outgoingRef);
+/* Query friends’ public meal logs (feed) */
+export async function getPublicMealLogs(currentUid: string) {
+  const friendsSnap = await getDocs(collection(db, 'users', currentUid, 'friends'));
+  const friendIds   = friendsSnap.docs.map((d) => d.id);
+  if (!friendIds.length) return [];
+
+  const logsQ = query(
+    collectionGroup(db, 'mealLogs'),
+    where('isPublic', '==', true),
+    where('ownerUid', 'in', friendIds),
+    orderBy('timestamp', 'desc')
+  );
+
+  const snap = await getDocs(logsQ);
+  return snap.docs.map((d) => ({
+    id: d.id,
+    ownerUid: d.ref.parent.parent!.id,
+    ...(d.data() as any),
+  }));
 }
 
-export async function cancelFriendRequest(uid: string, friendUid: string) {
-  const outgoingRef = doc(db, 'users', uid, 'outgoingRequests', friendUid);
-  const incomingRef = doc(db, 'users', friendUid, 'incomingRequests', uid);
-  await deleteDoc(outgoingRef);
-  await deleteDoc(incomingRef);
-}
-
-export async function removeFriend(uid: string, friendUid: string) {
-  const myFriendRef    = doc(db, 'users', uid, 'friends', friendUid);
-  const theirFriendRef = doc(db, 'users', friendUid, 'friends', uid);
-  await deleteDoc(myFriendRef);
-  await deleteDoc(theirFriendRef);
-}
-
-export async function getFriends(uid: string) {
-  const colRef = collection(db, 'users', uid, 'friends');
-  const snap   = await getDocs(colRef);
-  return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
-}
-
-export async function getIncomingRequests(uid: string) {
-  const colRef = collection(db, 'users', uid, 'incomingRequests');
-  const snap   = await getDocs(colRef);
-  return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
-}
-
-export async function getOutgoingRequests(uid: string) {
-  const colRef = collection(db, 'users', uid, 'outgoingRequests');
-  const snap   = await getDocs(colRef);
-  return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
-}
-
+/* ──────────────────────────────
+   4) Friends & Requests
+────────────────────────────────*/
 export async function searchUserByEmail(email: string) {
   const usersRef = collection(db, 'users');
   const q        = query(usersRef, where('email', '==', email));
   const snap     = await getDocs(q);
+
   if (!snap.empty) {
     const docSnap = snap.docs[0];
     return { id: docSnap.id, ...(docSnap.data() as any) };
@@ -161,5 +159,62 @@ export async function searchUserByEmail(email: string) {
   return null;
 }
 
-// so other modules can import the Firestore instance
+export async function sendFriendRequest(uid: string, friendUid: string) {
+  const outgoing = doc(db, 'users', uid,       'outgoingRequests', friendUid);
+  const incoming = doc(db, 'users', friendUid, 'incomingRequests', uid);
+
+  const data = {
+    from: uid,
+    to: friendUid,
+    status: 'pending',
+    timestamp: Date.now(),
+  };
+
+  await setDoc(outgoing, data);
+  await setDoc(incoming, data);
+}
+
+/* -- NEW: atomic accept with writeBatch ------------------------ */
+export async function acceptFriend(uid: string, friendUid: string) {
+  const batch = writeBatch(db);
+
+  const incoming = doc(db, 'users', uid,       'incomingRequests', friendUid);
+  const outgoing = doc(db, 'users', friendUid, 'outgoingRequests', uid);
+  const me       = doc(db, 'users', uid,       'friends',          friendUid);
+  const them     = doc(db, 'users', friendUid, 'friends',          uid);
+
+  const since = Date.now();
+
+  batch.set(me,   { since });
+  batch.set(them, { since });
+  batch.delete(incoming);
+  batch.delete(outgoing);
+
+  await batch.commit();  // all-or-nothing
+}
+
+export async function rejectFriend(uid: string, friendUid: string) {
+  await deleteDoc(doc(db, 'users', uid,       'incomingRequests', friendUid));
+  await deleteDoc(doc(db, 'users', friendUid, 'outgoingRequests', uid));
+}
+
+export async function cancelFriendRequest(uid: string, friendUid: string) {
+  await deleteDoc(doc(db, 'users', uid,       'outgoingRequests', friendUid));
+  await deleteDoc(doc(db, 'users', friendUid, 'incomingRequests', uid));
+}
+
+export async function removeFriend(uid: string, friendUid: string) {
+  await deleteDoc(doc(db, 'users', uid,       'friends', friendUid));
+  await deleteDoc(doc(db, 'users', friendUid, 'friends', uid));
+}
+
+export async function getFriends(uid: string) {
+  const col   = collection(db, 'users', uid, 'friends');
+  const snap  = await getDocs(col);
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+}
+
+/* ──────────────────────────────
+   5) Exports
+────────────────────────────────*/
 export { db };
