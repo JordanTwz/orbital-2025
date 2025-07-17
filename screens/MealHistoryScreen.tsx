@@ -1,5 +1,4 @@
 // screens/MealHistoryScreen.tsx
-
 import React, { useState, useCallback } from 'react';
 import {
   SafeAreaView,
@@ -28,6 +27,8 @@ type MealLog = {
     macros: { carbs: number; fats: number; proteins: number };
   }[];
   timestamp: number;
+  isPublic: boolean;
+  likes: string[]; // ← array of liker UIDs
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MealHistory'>;
@@ -36,10 +37,12 @@ export default function MealHistoryScreen({ navigation }: Props) {
   const [logs, setLogs] = useState<MealLog[]>([]);
   const [loading, setLoading] = useState(true);
 
+  /* ─── fetch every time the screen gains focus ─── */
   const fetchLogs = async () => {
     setLoading(true);
     const uid = getAuth().currentUser?.uid;
     if (!uid) return;
+
     try {
       const data = await getMealLogs(uid);
       setLogs(data as MealLog[]);
@@ -50,24 +53,26 @@ export default function MealHistoryScreen({ navigation }: Props) {
     }
   };
 
-  // refetch every time this screen is focused
   useFocusEffect(
     useCallback(() => {
       fetchLogs();
     }, [])
   );
 
+  /* ─── delete handler ─── */
   const handleDelete = async (id: string) => {
     const uid = getAuth().currentUser?.uid;
     if (!uid) return;
+
     try {
       await deleteMealLog(uid, id);
-      setLogs(current => current.filter(log => log.id !== id));
+      setLogs((current) => current.filter((log) => log.id !== id));
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to delete meal');
     }
   };
 
+  /* ─── loaders & empty state ─── */
   if (loading) {
     return (
       <View style={styles.center}>
@@ -76,7 +81,6 @@ export default function MealHistoryScreen({ navigation }: Props) {
     );
   }
 
-  // Guard: if no logs, show a friendly message
   if (logs.length === 0) {
     return (
       <SafeAreaView style={styles.screen}>
@@ -89,44 +93,59 @@ export default function MealHistoryScreen({ navigation }: Props) {
     );
   }
 
+  /* ─── render one item ─── */
+  const renderItem = ({ item }: { item: MealLog }) => {
+    const likesCount = item.likes?.length ?? 0;
+    const heart      = item.isPublic ? '❤️' : '🔒'; // show lock if private
+
+    return (
+      <View style={styles.item}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('MealDetail', { log: item })}
+        >
+          <Text style={styles.date}>
+            {new Date(item.timestamp).toLocaleString()}
+          </Text>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryText}>
+              {item.description} — {item.totalCalories} kcal
+            </Text>
+
+            <Text style={styles.likeBadge}>
+              {heart} {likesCount}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditMeal', { log: item })}
+          >
+            <Text style={styles.editText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDelete(item.id)}>
+            <Text style={styles.deleteText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  /* ─── list ─── */
   return (
     <SafeAreaView style={styles.screen}>
       <FlatList
         data={logs}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <View style={styles.item}>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('MealDetail', { log: item })
-              }
-            >
-              <Text style={styles.date}>
-                {new Date(item.timestamp).toLocaleString()}
-              </Text>
-              <Text style={styles.summary}>
-                {item.description} — {item.totalCalories} kcal
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.actionRow}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('EditMeal', { log: item })}
-              >
-                <Text style={styles.editText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDelete(item.id)}>
-                <Text style={styles.deleteText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
       />
     </SafeAreaView>
   );
 }
 
+/* ───────────────────────── styles ───────────────────────── */
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -147,10 +166,22 @@ const styles = StyleSheet.create({
     color: AppTheme.colors.border,
     marginBottom: AppTheme.spacing.xs,
   },
-  summary: {
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryText: {
     fontSize: AppTheme.typography.body,
     color: AppTheme.colors.text,
     fontWeight: '500',
+    flexShrink: 1,
+    paddingRight: AppTheme.spacing.md,
+  },
+  likeBadge: {
+    fontSize: AppTheme.typography.body,
+    color: AppTheme.colors.primary,
+    fontWeight: '600',
   },
   actionRow: {
     flexDirection: 'row',

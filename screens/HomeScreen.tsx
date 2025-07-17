@@ -42,13 +42,13 @@ export default function HomeScreen({ navigation }: Props) {
         <Text style={styles.sectionHeader}>Meal Insights</Text>
         <View style={styles.gridRow}>
           <TouchableOpacity
-            style={styles.gridButton}
+            style={[styles.gridButton, styles.gridButtonLarge]}
             onPress={() => navigation.navigate('MealHistory')}
           >
             <Text style={styles.gridButtonText}>History</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.gridButton}
+            style={[styles.gridButton, styles.gridButtonLarge]}
             onPress={() => navigation.navigate('Trends')}
           >
             <Text style={styles.gridButtonText}>Trends</Text>
@@ -79,6 +79,13 @@ export default function HomeScreen({ navigation }: Props) {
             onPress={() => navigation.navigate('SearchUsers')}
           >
             <Text style={styles.gridButtonText}>Add Friend</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.gridButton}
+            onPress={() => navigation.navigate('PublicFeed')}
+          >
+            <Text style={styles.gridButtonText}>Feed</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -131,7 +138,7 @@ const styles = StyleSheet.create({
     marginBottom: AppTheme.spacing.md,
   },
   gridButton: {
-    width: '48%',
+    width: '30%',
     backgroundColor: AppTheme.colors.card,
     borderWidth: 1,
     borderColor: AppTheme.colors.primary,
@@ -140,6 +147,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 1,
     position: 'relative', // for badge positioning
+  },
+  // New style for 2-button row to spread evenly
+  gridButtonLarge: {
+    width: '48%',
   },
   gridButtonText: {
     color: AppTheme.colors.primary,

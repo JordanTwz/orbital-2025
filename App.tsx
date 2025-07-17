@@ -1,5 +1,4 @@
 // App.tsx
-
 import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
@@ -22,6 +21,7 @@ import TrendsScreen from './screens/TrendsScreen';
 
 import FriendsScreen from './screens/friends/FriendsScreen';
 import SearchUsersScreen from './screens/SearchUsersScreen';
+import PublicFeedScreen from './screens/PublicFeedScreen';  // <-- new import
 
 import { AppTheme } from './theme';
 
@@ -36,6 +36,7 @@ export type RootStackParamList = {
   Trends: undefined;
   Friends: undefined;
   SearchUsers: undefined;
+  PublicFeed: undefined;                                // <-- new route
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -105,43 +106,15 @@ export default function App() {
           })}
         />
 
-        <Stack.Screen
-          name="MealLog"
-          component={MealLogScreen}
-          options={{ title: 'Log a Meal' }}
-        />
-        <Stack.Screen
-          name="MealHistory"
-          component={MealHistoryScreen}
-          options={{ title: 'History' }}
-        />
-        <Stack.Screen
-          name="MealDetail"
-          component={MealDetailScreen}
-          options={{ title: 'Meal Details' }}
-        />
-        <Stack.Screen
-          name="EditMeal"
-          component={EditMealScreen}
-          options={{ title: 'Edit Meal' }}
-        />
-        <Stack.Screen
-          name="Trends"
-          component={TrendsScreen}
-          options={{ title: 'Eating Trends' }}
-        />
+        <Stack.Screen name="MealLog" component={MealLogScreen} options={{ title: 'Log a Meal' }} />
+        <Stack.Screen name="MealHistory" component={MealHistoryScreen} options={{ title: 'History' }} />
+        <Stack.Screen name="MealDetail" component={MealDetailScreen} options={{ title: 'Meal Details' }} />
+        <Stack.Screen name="EditMeal" component={EditMealScreen} options={{ title: 'Edit Meal' }} />
+        <Stack.Screen name="Trends" component={TrendsScreen} options={{ title: 'Eating Trends' }} />
 
-        <Stack.Screen
-          name="Friends"
-          component={FriendsScreen}
-          options={{ title: 'Community' }}
-        />
-
-        <Stack.Screen
-          name="SearchUsers"
-          component={SearchUsersScreen}
-          options={{ title: 'Add Friend' }}
-        />
+        <Stack.Screen name="Friends" component={FriendsScreen} options={{ title: 'Community' }} />
+        <Stack.Screen name="SearchUsers" component={SearchUsersScreen} options={{ title: 'Add Friend' }} />
+        <Stack.Screen name="PublicFeed" component={PublicFeedScreen} options={{ title: 'Community Feed' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
