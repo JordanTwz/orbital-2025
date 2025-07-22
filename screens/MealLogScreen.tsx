@@ -35,7 +35,7 @@ type Analysis = {
   dishes: Dish[];
 };
 
-const SERVER = 'http://192.168.1.1:3000';
+const SERVER = 'https://orbital-2025-6zhd.onrender.com';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MealLog'>;
 

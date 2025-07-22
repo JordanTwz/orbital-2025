@@ -24,6 +24,18 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d29862af-0b3b-4dc2-87cd-244ce3cd5f61"
+      }
+    },
+    "owner": "jordantwz",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/d29862af-0b3b-4dc2-87cd-244ce3cd5f61"
     }
   }
 }
