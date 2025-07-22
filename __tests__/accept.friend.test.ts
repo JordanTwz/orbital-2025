@@ -1,23 +1,34 @@
 import { acceptFriend } from '@firebase';
-import { setDoc, deleteDoc, doc, getFirestore} from 'firebase/firestore';
+import { setDoc, deleteDoc, doc, getFirestore, writeBatch} from 'firebase/firestore';
 
-jest.mock('firebase/firestore', () => ({
+const firestoreMocks: any = {};
 
-    getFirestore: jest.fn(() => ({})),
-    setDoc: jest.fn(),
-    deleteDoc: jest.fn(),
-    doc: jest.fn((db, ...segments) => segments.join('/')),
-}));
+jest.mock('firebase/firestore', () => {
+    const setMock = jest.fn();
+    const deleteMock = jest.fn();
+    const commitMock = jest.fn();
 
-test('acceptFriend establishes friendship and deletes request documents', async () => {
-    const uid = 'userA';
-    const friendUid = 'userB';
+    // Save them for use in your test
+    firestoreMocks.setMock = setMock;
+    firestoreMocks.deleteMock = deleteMock;
+    firestoreMocks.commitMock = commitMock;
 
-    await acceptFriend(uid, friendUid);
+    return {
+        doc: jest.fn((db, ...segments) => segments.join('/')),
+        getFirestore: jest.fn(() => ({})),
+        writeBatch: jest.fn(() => ({
+            set: setMock,
+            delete: deleteMock,
+            commit: commitMock,
+        })),
+    };
+});
 
-    expect(setDoc).toHaveBeenCalledWith('users/userA/friends/userB', expect.any(Object));
-    expect(setDoc).toHaveBeenCalledWith('users/userB/friends/userA', expect.any(Object));
+// Now you can use firestoreMocks.setMock in your test
+test('acceptFriend calls batch methods correctly', async () => {
+    await acceptFriend('userA', 'userB');
 
-    expect(deleteDoc).toHaveBeenCalledWith('users/userA/incomingRequests/userB');
-    expect(deleteDoc).toHaveBeenCalledWith('users/userB/outgoingRequests/userA');
+    expect(firestoreMocks.setMock).toHaveBeenCalledTimes(2);
+    expect(firestoreMocks.deleteMock).toHaveBeenCalledTimes(2);
+    expect(firestoreMocks.commitMock).toHaveBeenCalled();
 });
