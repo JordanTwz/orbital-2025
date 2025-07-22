@@ -21,7 +21,7 @@ import TrendsScreen from './screens/TrendsScreen';
 
 import FriendsScreen from './screens/friends/FriendsScreen';
 import SearchUsersScreen from './screens/SearchUsersScreen';
-import PublicFeedScreen from './screens/PublicFeedScreen';  // <-- new import
+import PublicFeedScreen from './screens/PublicFeedScreen';
 
 import { AppTheme } from './theme';
 
@@ -36,7 +36,7 @@ export type RootStackParamList = {
   Trends: undefined;
   Friends: undefined;
   SearchUsers: undefined;
-  PublicFeed: undefined;                                // <-- new route
+  PublicFeed: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

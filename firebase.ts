@@ -1,7 +1,4 @@
-/* firebase.ts
-   Firebase initialisation + auth helpers + CRUD + social graph.
-   Updated 17 Jul 2025 – acceptFriend now uses an atomic writeBatch.
-*/
+// firebase.ts
 
 import { initializeApp } from 'firebase/app';
 import {
@@ -28,12 +25,11 @@ import {
   where,
   arrayUnion,
   arrayRemove,
-  writeBatch,                    // ← NEW: for atomic friend-accept
+  writeBatch,
 } from 'firebase/firestore';
 
-/* ──────────────────────────────
-   1) Firebase App & Firestore
-────────────────────────────────*/
+// Firebase App & Firestore
+
 const firebaseConfig = {
   apiKey:            'AIzaSyDB0LQru_C36-S07Zfk0D470F1czxJ6XUg',
   authDomain:        'mealcraft-fdfec.firebaseapp.com',
@@ -47,9 +43,8 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-/* ──────────────────────────────
-   2) Auth helpers
-────────────────────────────────*/
+// Auth helpers
+
 export async function register(email: string, password: string) {
   const normalized = email.trim().toLowerCase();
   const cred       = await createUserWithEmailAndPassword(auth, normalized, password);
@@ -74,9 +69,8 @@ export function subscribeToAuthChanges(cb: (user: User | null) => void) {
   return onAuthStateChanged(auth, cb);
 }
 
-/* ──────────────────────────────
-   3) Meal-log CRUD + likes / privacy
-────────────────────────────────*/
+// Meal-log CRUD + likes / privacy
+
 export async function addMealLog(uid: string, log: any) {
   const ref = collection(db, 'users', uid, 'mealLogs');
   return addDoc(ref, {
@@ -123,7 +117,7 @@ export async function unlikeMealLog(ownerUid: string, id: string, likerUid: stri
   });
 }
 
-/* Query friends’ public meal logs (feed) */
+/* Query friends' public meal logs (feed) */
 export async function getPublicMealLogs(currentUid: string) {
   const friendsSnap = await getDocs(collection(db, 'users', currentUid, 'friends'));
   const friendIds   = friendsSnap.docs.map((d) => d.id);
@@ -144,9 +138,8 @@ export async function getPublicMealLogs(currentUid: string) {
   }));
 }
 
-/* ──────────────────────────────
-   4) Friends & Requests
-────────────────────────────────*/
+// Friends and Requests
+
 export async function searchUserByEmail(email: string) {
   const usersRef = collection(db, 'users');
   const q        = query(usersRef, where('email', '==', email));
@@ -174,7 +167,8 @@ export async function sendFriendRequest(uid: string, friendUid: string) {
   await setDoc(incoming, data);
 }
 
-/* -- NEW: atomic accept with writeBatch ------------------------ */
+// atomic accept with writeBatch
+
 export async function acceptFriend(uid: string, friendUid: string) {
   const batch = writeBatch(db);
 
@@ -214,7 +208,4 @@ export async function getFriends(uid: string) {
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
 }
 
-/* ──────────────────────────────
-   5) Exports
-────────────────────────────────*/
 export { db };

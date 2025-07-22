@@ -28,7 +28,7 @@ type MealLog = {
   }[];
   timestamp: number;
   isPublic: boolean;
-  likes: string[]; // ← array of liker UIDs
+  likes: string[]; // array of liker UIDs
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MealHistory'>;
@@ -37,7 +37,8 @@ export default function MealHistoryScreen({ navigation }: Props) {
   const [logs, setLogs] = useState<MealLog[]>([]);
   const [loading, setLoading] = useState(true);
 
-  /* ─── fetch every time the screen gains focus ─── */
+  // fetch every time the screen gains focus
+
   const fetchLogs = async () => {
     setLoading(true);
     const uid = getAuth().currentUser?.uid;
@@ -59,7 +60,8 @@ export default function MealHistoryScreen({ navigation }: Props) {
     }, [])
   );
 
-  /* ─── delete handler ─── */
+  // delete handler
+
   const handleDelete = async (id: string) => {
     const uid = getAuth().currentUser?.uid;
     if (!uid) return;
@@ -72,7 +74,8 @@ export default function MealHistoryScreen({ navigation }: Props) {
     }
   };
 
-  /* ─── loaders & empty state ─── */
+  // loaders and empty state
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -93,7 +96,8 @@ export default function MealHistoryScreen({ navigation }: Props) {
     );
   }
 
-  /* ─── render one item ─── */
+  // render one item 
+
   const renderItem = ({ item }: { item: MealLog }) => {
     const likesCount = item.likes?.length ?? 0;
     const heart      = item.isPublic ? '❤️' : '🔒'; // show lock if private
@@ -132,7 +136,7 @@ export default function MealHistoryScreen({ navigation }: Props) {
     );
   };
 
-  /* ─── list ─── */
+  // list
   return (
     <SafeAreaView style={styles.screen}>
       <FlatList
@@ -145,7 +149,8 @@ export default function MealHistoryScreen({ navigation }: Props) {
   );
 }
 
-/* ───────────────────────── styles ───────────────────────── */
+// styles
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,

@@ -29,9 +29,8 @@ export default function PublicFeedScreen() {
   const [names, setNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
-  /* ─────────────────────────────────────────
-     Subscribe whenever the friend list changes
-  ──────────────────────────────────────────*/
+  // Subscribe whenever the friend list changes
+     
   useEffect(() => {
     if (friends.length === 0) {
       setFeeds([]);
@@ -60,7 +59,7 @@ export default function PublicFeedScreen() {
         setFeeds(items);
         setError(null);
 
-        /* Fetch each owner’s name once */
+        // Fetch each owner's name once 
         items.forEach((item) => {
           if (!names[item.ownerUid]) {
             getDoc(doc(db, 'users', item.ownerUid))
@@ -83,11 +82,10 @@ export default function PublicFeedScreen() {
     );
 
     return unsub;
-  }, [friends]); // ← only depends on friends
+  }, [friends]); // only depends on friends
 
-  /* ─────────────────────────────────────────
-     Like / Unlike handler (no local mutation)
-  ──────────────────────────────────────────*/
+  // Like / Unlike handler (no local mutation)
+     
   const toggleLike = useCallback(
     async (item: any) => {
       const hasLiked = item.likes.includes(uid);
@@ -100,9 +98,8 @@ export default function PublicFeedScreen() {
     [uid]
   );
 
-  /* ─────────────────────────────────────────
-     Render one feed card
-  ──────────────────────────────────────────*/
+  // Render one feed card
+ 
   const renderItem = ({ item }: { item: any }) => {
     const ownerName = names[item.ownerUid] || item.ownerUid;
     const hasLiked = item.likes.includes(uid);
@@ -123,9 +120,7 @@ export default function PublicFeedScreen() {
     );
   };
 
-  /* ─────────────────────────────────────────
-     UI
-  ──────────────────────────────────────────*/
+  // UI
   if (error) {
     return (
       <SafeAreaView style={styles.screen}>
@@ -151,9 +146,6 @@ export default function PublicFeedScreen() {
   );
 }
 
-/* ─────────────────────────────────────────
-   Styles
-──────────────────────────────────────────*/
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: AppTheme.colors.background },
   card: {

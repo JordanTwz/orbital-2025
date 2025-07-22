@@ -21,7 +21,7 @@ import {
 //TYPES
 
 export type Friend = {
-  id: string;      // Friend’s UID
+  id: string;      // Friend's UID
   since: number;   // epoch ms
 };
 
