@@ -74,9 +74,8 @@ export function subscribeToAuthChanges(cb: (user: User | null) => void) {
 export async function addMealLog(uid: string, log: any) {
   const ref = collection(db, 'users', uid, 'mealLogs');
   return addDoc(ref, {
-    ...log,
+    ...log,               // for log.isPublic to flow through
     ownerUid: uid,
-    isPublic: false,
     likes: [] as string[],
   });
 }

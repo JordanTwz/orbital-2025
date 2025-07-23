@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  Switch,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -39,13 +40,15 @@ const SERVER = 'https://orbital-2025-6zhd.onrender.com';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MealLog'>;
 
-export default function MealLogScreen({}: Props) {
+export default function MealLogScreen({ navigation }: Props) {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
-  // Pick from gallery
+  // new state for privacy choice
+  const [isPublic, setIsPublic] = useState<boolean>(false);
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -60,10 +63,10 @@ export default function MealLogScreen({}: Props) {
       setImageUri(picker.assets[0].uri);
       setAnalysis(null);
       setExpandedIndex(null);
+      setIsPublic(false);
     }
   };
 
-  // Take a new photo
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
@@ -78,10 +81,11 @@ export default function MealLogScreen({}: Props) {
       setImageUri(picker.assets[0].uri);
       setAnalysis(null);
       setExpandedIndex(null);
+      setIsPublic(false);
     }
   };
 
-  // Send to server and save
+  // analyze only, do NOT save here
   const analyzeImage = async () => {
     if (!imageUri) return;
     setLoading(true);
@@ -108,20 +112,41 @@ export default function MealLogScreen({}: Props) {
       }
       const json = (await resp.json()) as Analysis;
       setAnalysis(json);
-
-      // Save to Firestore
-      const uid = getAuth().currentUser?.uid;
-      if (uid) {
-        await addMealLog(uid, {
-          description: json.description,
-          totalCalories: json.totalCalories,
-          dishes: json.dishes,
-          timestamp: Date.now(),
-        });
-      }
     } catch (err: any) {
       console.error(err);
       Alert.alert('Error', err.message || 'Analysis failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // new: only save when user presses Save
+  const handleSave = async () => {
+    if (!analysis) return;
+    const uid = getAuth().currentUser?.uid;
+    if (!uid) return;
+
+    setLoading(true);
+    try {
+      const docRef = await addMealLog(uid, {
+        description:   analysis.description,
+        totalCalories: analysis.totalCalories,
+        dishes:        analysis.dishes,
+        timestamp:     Date.now(),
+        isPublic,                      // honor user’s choice
+      });
+      // build a log to navigate to detail
+      const newLog = {
+        id:           docRef.id,
+        ownerUid:     uid,
+        ...analysis,
+        isPublic,
+        likes:        [] as string[],
+        timestamp:    Date.now(),
+      };
+      navigation.replace('MealDetail', { log: newLog });
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Could not save meal');
     } finally {
       setLoading(false);
     }
@@ -132,7 +157,6 @@ export default function MealLogScreen({}: Props) {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Log a Meal</Text>
 
-        {/* Photo preview */}
         <View style={styles.photoBox}>
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.photo} />
@@ -141,7 +165,6 @@ export default function MealLogScreen({}: Props) {
           )}
         </View>
 
-        {/* Pick / Take buttons */}
         <View style={styles.buttonRow}>
           <TouchableOpacity style={styles.actionButton} onPress={pickImage}>
             <Text style={styles.actionText}>Pick from Gallery</Text>
@@ -151,8 +174,7 @@ export default function MealLogScreen({}: Props) {
           </TouchableOpacity>
         </View>
 
-        {/* Analyze Meal */}
-        {imageUri && (
+        {imageUri && !analysis && (
           <TouchableOpacity
             style={[styles.actionButton, styles.analyzeButton]}
             onPress={analyzeImage}
@@ -161,45 +183,56 @@ export default function MealLogScreen({}: Props) {
           </TouchableOpacity>
         )}
 
-        {/* Loading overlay */}
         {loading && (
           <View style={styles.overlay}>
             <ActivityIndicator size="large" color={AppTheme.colors.primary} />
           </View>
         )}
 
-        {/* Analysis results */}
         {analysis && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Analysis</Text>
-            <Text style={styles.summary}>
-              {analysis.description} — {analysis.totalCalories} kcal
-            </Text>
-            {analysis.dishes.map((dish, idx) => (
-              <View key={idx} style={styles.dishContainer}>
-                <TouchableOpacity
-                  onPress={() =>
-                    setExpandedIndex(expandedIndex === idx ? null : idx)
-                  }
-                  style={styles.dishHeader}
-                >
-                  <Text style={styles.dishText}>
-                    {dish.name} — {dish.calories} kcal
-                  </Text>
-                </TouchableOpacity>
-                {expandedIndex === idx && (
-                  <View style={styles.macroTable}>
-                    {Object.entries(dish.macros).map(([m, g]) => (
-                      <View key={m} style={styles.macroRow}>
-                        <Text style={styles.macroName}>{m}</Text>
-                        <Text style={styles.macroValue}>{g} g</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            ))}
-          </View>
+          <>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Analysis</Text>
+              <Text style={styles.summary}>
+                {analysis.description} — {analysis.totalCalories} kcal
+              </Text>
+              {analysis.dishes.map((dish, idx) => (
+                <View key={idx} style={styles.dishContainer}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setExpandedIndex(expandedIndex === idx ? null : idx)
+                    }
+                    style={styles.dishHeader}
+                  >
+                    <Text style={styles.dishText}>
+                      {dish.name} — {dish.calories} kcal
+                    </Text>
+                  </TouchableOpacity>
+                  {expandedIndex === idx && (
+                    <View style={styles.macroTable}>
+                      {Object.entries(dish.macros).map(([m, g]) => (
+                        <View key={m} style={styles.macroRow}>
+                          <Text style={styles.macroName}>{m}</Text>
+                          <Text style={styles.macroValue}>{g} g</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+
+            {/* privacy toggle */}
+            <View style={styles.privacyRow}>
+              <Text style={styles.label}>Public</Text>
+              <Switch value={isPublic} onValueChange={setIsPublic} />
+            </View>
+
+            {/* Save */}
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveButtonText}>Save</Text>
+            </TouchableOpacity>
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -207,118 +240,139 @@ export default function MealLogScreen({}: Props) {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: AppTheme.colors.background,
-  },
+  screen: { flex: 1, backgroundColor: AppTheme.colors.background },
   container: {
-    padding: AppTheme.spacing.md,
+    padding:    AppTheme.spacing.md,
     alignItems: 'center',
   },
   heading: {
-    fontSize: AppTheme.typography.h2,
+    fontSize:   AppTheme.typography.h2,
     fontWeight: 'bold',
-    color: AppTheme.colors.text,
+    color:      AppTheme.colors.text,
     marginBottom: AppTheme.spacing.lg,
   },
   photoBox: {
-    width: '100%',
-    height: 250,
-    backgroundColor: AppTheme.colors.card,
-    borderRadius: AppTheme.roundness,
-    borderWidth: 1,
-    borderColor: AppTheme.colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    marginBottom: AppTheme.spacing.md,
+    width:            '100%',
+    height:           250,
+    backgroundColor:  AppTheme.colors.card,
+    borderRadius:     AppTheme.roundness,
+    borderWidth:      1,
+    borderColor:      AppTheme.colors.border,
+    alignItems:       'center',
+    justifyContent:   'center',
+    overflow:         'hidden',
+    marginBottom:     AppTheme.spacing.md,
   },
   photoPlaceholder: {
-    color: AppTheme.colors.border,
+    color:    AppTheme.colors.border,
     fontSize: AppTheme.typography.body,
   },
   photo: {
-    width: '100%',
+    width:  '100%',
     height: '100%',
   },
   buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: AppTheme.spacing.md,
+    flexDirection:   'row',
+    justifyContent:  'space-between',
+    width:           '100%',
+    marginBottom:    AppTheme.spacing.md,
   },
   actionButton: {
-    flex: 1,
+    flex:          1,
     backgroundColor: AppTheme.colors.primary,
     paddingVertical: AppTheme.spacing.sm * 1.5,
     marginHorizontal: AppTheme.spacing.xs,
-    borderRadius: AppTheme.roundness,
-    alignItems: 'center',
-    elevation: 2,
+    borderRadius:    AppTheme.roundness,
+    alignItems:     'center',
+    elevation:      2,
   },
   analyzeButton: {
-    width: '100%',
-    marginVertical: AppTheme.spacing.md,   
-    elevation: 4,                        
+    width:          '100%',
+    marginVertical: AppTheme.spacing.md,
+    elevation:      4,
   },
-
   actionText: {
-    color: '#fff',
-    fontSize: AppTheme.typography.body,
+    color:      '#fff',
+    fontSize:   AppTheme.typography.body,
     fontWeight: '600',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent:  'center',
+    alignItems:      'center',
   },
   card: {
-    width: '100%',
+    width:         '100%',
     backgroundColor: AppTheme.colors.card,
-    borderRadius: AppTheme.roundness,
-    padding: AppTheme.spacing.md,
-    elevation: 2,
-    marginTop: AppTheme.spacing.md,
+    borderRadius:  AppTheme.roundness,
+    padding:       AppTheme.spacing.md,
+    elevation:     2,
+    marginTop:     AppTheme.spacing.md,
   },
   cardTitle: {
-    fontSize: AppTheme.typography.h3,
+    fontSize:   AppTheme.typography.h3,
     fontWeight: 'bold',
     marginBottom: AppTheme.spacing.sm,
-    color: AppTheme.colors.text,
+    color:      AppTheme.colors.text,
   },
   summary: {
-    fontSize: AppTheme.typography.body,
+    fontSize:   AppTheme.typography.body,
     marginBottom: AppTheme.spacing.md,
-    color: AppTheme.colors.text,
+    color:      AppTheme.colors.text,
   },
   dishContainer: {
     borderTopWidth: 1,
-    borderColor: AppTheme.colors.border,
+    borderColor:    AppTheme.colors.border,
     paddingVertical: AppTheme.spacing.sm,
   },
   dishHeader: {
     paddingVertical: AppTheme.spacing.xs,
   },
   dishText: {
-    fontSize: AppTheme.typography.body,
+    fontSize:   AppTheme.typography.body,
     fontWeight: '500',
-    color: AppTheme.colors.text,
+    color:      AppTheme.colors.text,
   },
   macroTable: {
     paddingLeft: AppTheme.spacing.md,
   },
   macroRow: {
-    flexDirection: 'row',
+    flexDirection:  'row',
     justifyContent: 'space-between',
     paddingVertical: AppTheme.spacing.xs,
   },
   macroName: {
     fontSize: AppTheme.typography.small,
-    color: AppTheme.colors.text,
+    color:    AppTheme.colors.text,
   },
   macroValue: {
     fontSize: AppTheme.typography.small,
-    color: AppTheme.colors.text,
+    color:    AppTheme.colors.text,
+  },
+  privacyRow: {
+    flexDirection:  'row',
+    justifyContent: 'space-between',
+    alignItems:     'center',
+    marginVertical: AppTheme.spacing.sm,
+    width:          '100%',
+  },
+  label: {
+    fontSize: AppTheme.typography.body,
+    color:    AppTheme.colors.text,
+  },
+  saveButton: {
+    backgroundColor: AppTheme.colors.primary,
+    paddingVertical: AppTheme.spacing.sm * 1.5,
+    borderRadius:    AppTheme.roundness,
+    alignItems:      'center',
+    marginTop:       AppTheme.spacing.xl,
+    elevation:       2,
+    width:           '100%',
+  },
+  saveButtonText: {
+    color:      '#fff',
+    fontSize:   AppTheme.typography.body,
+    fontWeight: '600',
   },
 });
