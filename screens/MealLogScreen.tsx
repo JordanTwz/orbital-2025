@@ -19,6 +19,7 @@ import { getAuth } from 'firebase/auth';
 import { addMealLog } from '../firebase';
 import type { RootStackParamList } from '../App';
 import { AppTheme } from '../theme';
+import { uploadImageAnalysis} from "../uploadImageAnalysis";
 
 type Dish = {
   name: string;
@@ -90,28 +91,11 @@ export default function MealLogScreen({ navigation }: Props) {
     if (!imageUri) return;
     setLoading(true);
     try {
-      const uriParts = imageUri.split('/');
-      const fileName = uriParts.pop() || 'photo.jpg';
-      const match = /\.(\w+)$/.exec(fileName);
-      const fileType = match ? `image/${match[1]}` : 'image';
-      const formData = new FormData();
-      formData.append('photo', {
-        uri: imageUri,
-        name: fileName,
-        type: fileType,
-      } as any);
-
-      const resp = await fetch(`${SERVER}/analyze`, {
-        method: 'POST',
-        body: formData,
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const result = await uploadImageAnalysis({
+        imageUri,
+        serverUrl: SERVER,
       });
-      if (!resp.ok) {
-        const err = await resp.json();
-        throw new Error(err.error || 'Server error');
-      }
-      const json = (await resp.json()) as Analysis;
-      setAnalysis(json);
+      setAnalysis(result);
     } catch (err: any) {
       console.error(err);
       Alert.alert('Error', err.message || 'Analysis failed');

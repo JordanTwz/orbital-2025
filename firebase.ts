@@ -69,6 +69,8 @@ export function subscribeToAuthChanges(cb: (user: User | null) => void) {
   return onAuthStateChanged(auth, cb);
 }
 
+
+
 // Meal-log CRUD + likes / privacy
 
 export async function addMealLog(uid: string, log: any) {
