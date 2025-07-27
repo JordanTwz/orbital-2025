@@ -1,3 +1,5 @@
+// analyze.test.ts
+
 import { uploadImageAnalysis } from '../uploadImageAnalysis';
 
 global.fetch = jest.fn();

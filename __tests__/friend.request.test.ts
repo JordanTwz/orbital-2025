@@ -1,3 +1,5 @@
+// friend.request.test.ts
+
 import { sendFriendRequest } from '@firebase';
 import {setDoc, doc, getFirestore } from "firebase/firestore";
 

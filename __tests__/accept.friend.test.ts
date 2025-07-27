@@ -1,3 +1,5 @@
+// accept.friend.test.ts
+
 import { acceptFriend } from '@firebase';
 import { setDoc, deleteDoc, doc, getFirestore, writeBatch} from 'firebase/firestore';
 
